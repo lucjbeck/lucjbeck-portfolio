@@ -1,0 +1,142 @@
+---
+/**
+ * Nav — datasheet-style top bar. A mono wordmark cell on the left and a few
+ * hairline-divided anchor cells on the right. Not a generic centered sticky bar.
+ * Keyboard accessible with visible focus (inherited from global.css).
+ */
+const links = [
+  { href: "#about", label: "About", index: "00" },
+  { href: "#education", label: "Education", index: "01" },
+  { href: "#engineering", label: "Engineering", index: "02" },
+  { href: "#research", label: "Research", index: "03" },
+  { href: "#experience", label: "Experience", index: "04" },
+  { href: "#contact", label: "Contact", index: "05" },
+];
+---
+
+<header class="nav">
+  <a class="nav__wordmark" href="#top">
+    <span class="nav__mark" aria-hidden="true">LB</span>
+    <span class="nav__name">Luc Beck</span>
+  </a>
+
+  <nav class="nav__links" aria-label="Primary">
+    <ul role="list" class="nav__list">
+      {
+        links.map((link) => (
+          <li class="nav__item">
+            <a class="nav__link" href={link.href} data-spring>
+              <span class="nav__index" aria-hidden="true">{link.index}</span>
+              <span class="nav__label">{link.label}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-nav);
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-inline: var(--gutter);
+    border-bottom: var(--border);
+    background: color-mix(in srgb, var(--c-bg) 86%, transparent);
+    backdrop-filter: blur(8px);
+  }
+
+  .nav__wordmark {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding-block: var(--space-3);
+    color: var(--c-text);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .nav__wordmark:hover {
+    color: var(--c-text);
+    text-decoration: none;
+  }
+
+  .nav__mark {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: var(--border-strong);
+    border-radius: var(--r-sm);
+    color: var(--c-accent);
+    font-weight: var(--fw-medium);
+  }
+
+  .nav__name {
+    color: var(--c-text-muted);
+  }
+
+  .nav__links {
+    display: flex;
+  }
+
+  .nav__list {
+    display: flex;
+    align-items: stretch;
+    margin: 0;
+  }
+
+  .nav__item {
+    display: flex;
+    border-left: var(--border);
+  }
+
+  .nav__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding-inline: var(--space-4);
+    color: var(--c-text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    transition: color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .nav__link:hover {
+    color: var(--c-text);
+    background: var(--c-bg-elev);
+    text-decoration: none;
+  }
+
+  .nav__index {
+    color: var(--c-accent);
+    font-size: var(--fs-micro);
+  }
+
+  /* On small screens, hide the index numbers and the descriptive name; keep
+     labels usable. */
+  @media (max-width: 720px) {
+    .nav__name,
+    .nav__index {
+      display: none;
+    }
+    .nav__link {
+      padding-inline: var(--space-3);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .nav__list {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+  }
+</style>

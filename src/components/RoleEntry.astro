@@ -1,0 +1,77 @@
+---
+/**
+ * RoleEntry — a catalogued professional role. Hairline cell with a mono catalog
+ * tag, the firm, a role/term/location metadata line, and the blurb.
+ *
+ * Props:
+ *   tag: string         // e.g. "ROLE-01"
+ *   firm: string
+ *   role: string        // title
+ *   term: string        // e.g. "Summers 2024 and 2025"
+ *   location?: string
+ *
+ * Slots: default — the role blurb.
+ */
+import CatalogNumber from "./CatalogNumber.astro";
+
+interface Props {
+  tag: string;
+  firm: string;
+  role: string;
+  term: string;
+  location?: string;
+}
+
+const { tag, firm, role, term, location } = Astro.props;
+---
+
+<article class="entry hairline-cell" data-reveal>
+  <header class="entry__head">
+    <CatalogNumber label={tag} />
+    <h3 class="entry__title">{firm}</h3>
+    <p class="entry__meta">
+      {role && <span class="entry__role">{role}</span>}
+      <span class="entry__term">{term}</span>
+      {location && <span class="entry__loc">{location}</span>}
+    </p>
+  </header>
+
+  <div class="entry__body">
+    <slot />
+  </div>
+</article>
+
+<style>
+  .entry {
+    padding: clamp(var(--space-5), 3vw, var(--space-7));
+  }
+
+  .entry__head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+  .entry__title {
+    font-size: var(--fs-h3);
+  }
+
+  .entry__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .entry__role {
+    color: var(--c-accent);
+  }
+
+  .entry__body {
+    max-width: var(--maxw-prose);
+    color: var(--c-text-muted);
+  }
+</style>

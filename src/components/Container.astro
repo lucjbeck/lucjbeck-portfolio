@@ -1,0 +1,35 @@
+---
+/**
+ * Container — centered max-width wrapper with gutter padding.
+ *
+ * Props:
+ *   as?: keyof HTMLElementTagNameMap  // element to render (default "div")
+ *   class?: string                    // extra classes, merged
+ *   width?: "default" | "prose"       // "prose" caps at readable measure
+ */
+interface Props {
+  as?: keyof HTMLElementTagNameMap;
+  class?: string;
+  width?: "default" | "prose";
+}
+
+const { as: Tag = "div", class: className, width = "default" } = Astro.props;
+---
+
+<Tag class:list={["container", `container--${width}`, className]}>
+  <slot />
+</Tag>
+
+<style>
+  .container {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+  .container--default {
+    max-width: var(--maxw);
+  }
+  .container--prose {
+    max-width: var(--maxw-prose);
+  }
+</style>

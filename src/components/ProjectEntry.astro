@@ -1,0 +1,124 @@
+---
+/**
+ * ProjectEntry — a catalogued engineering project. Hairline cell with a mono
+ * catalog tag, title, blurb, and a datasheet of spec fields (capability, demo,
+ * code). Placeholder fields are flagged in markup and surfaced in the report.
+ *
+ * Props:
+ *   tag: string         // e.g. "FIG. 01"
+ *   title: string
+ *   specs: { label: string; value: string; href?: string; placeholder?: boolean }[]
+ *
+ * Slots: default — the project blurb (paragraph(s)).
+ */
+import CatalogNumber from "./CatalogNumber.astro";
+
+interface Spec {
+  label: string;
+  value: string;
+  href?: string;
+  placeholder?: boolean;
+}
+interface Props {
+  tag: string;
+  title: string;
+  specs: Spec[];
+}
+
+const { tag, title, specs } = Astro.props;
+---
+
+<article class="entry hairline-cell" data-reveal>
+  <header class="entry__head">
+    <CatalogNumber label={tag} />
+    <h3 class="entry__title">{title}</h3>
+  </header>
+
+  <div class="entry__body">
+    <slot />
+  </div>
+
+  <dl class="entry__specs" data-reveal-group="project-specs">
+    {
+      specs.map((spec) => (
+        <div class="entry__spec" data-reveal>
+          <dt class="entry__spec-label">{spec.label}</dt>
+          <dd
+            class:list={[
+              "entry__spec-value",
+              spec.placeholder && "entry__spec-value--ph",
+            ]}
+          >
+            {spec.href ? (
+              <a href={spec.href}>{spec.value}</a>
+            ) : (
+              spec.value
+            )}
+          </dd>
+        </div>
+      ))
+    }
+  </dl>
+</article>
+
+<style>
+  .entry {
+    padding: clamp(var(--space-5), 3vw, var(--space-7));
+  }
+
+  .entry__head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+  .entry__title {
+    font-size: var(--fs-h3);
+  }
+
+  .entry__body {
+    max-width: var(--maxw-prose);
+    color: var(--c-text-muted);
+    margin-bottom: var(--space-6);
+  }
+
+  .entry__specs {
+    margin: 0;
+    border-top: var(--border);
+  }
+  .entry__spec {
+    display: grid;
+    grid-template-columns: minmax(7rem, 10rem) 1fr;
+    gap: var(--space-4);
+    padding-block: var(--space-3);
+    border-bottom: var(--border);
+  }
+  .entry__spec:last-child {
+    border-bottom: none;
+  }
+
+  .entry__spec-label {
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+
+  .entry__spec-value {
+    margin: 0;
+    color: var(--c-text);
+  }
+  .entry__spec-value--ph {
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+
+  @media (max-width: 560px) {
+    .entry__spec {
+      grid-template-columns: 1fr;
+      gap: var(--space-1);
+    }
+  }
+</style>

@@ -1,0 +1,246 @@
+{
+  "url": "https://animejs.com/",
+  "title": "Anime.js | JavaScript Animation Engine",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "colors": {
+    "pageBackground": "rgb(6, 6, 6)",
+    "backgroundColors": [
+      "rgb(255, 75, 75)",
+      "rgb(42, 41, 40)",
+      "rgb(141, 255, 85)",
+      "rgb(183, 255, 84)",
+      "rgb(255, 204, 42)",
+      "rgb(255, 125, 54)",
+      "rgb(255, 168, 40)",
+      "rgb(0, 255, 170)"
+    ],
+    "textColors": [
+      "rgb(180, 177, 175)",
+      "rgb(171, 178, 191)",
+      "rgb(209, 154, 102)",
+      "rgb(97, 174, 238)",
+      "rgb(152, 195, 121)",
+      "rgb(213, 211, 209)"
+    ],
+    "accentCandidates": [
+      "rgb(180, 177, 175)",
+      "rgb(42, 41, 40)",
+      "rgb(246, 244, 242)",
+      "rgb(147, 144, 142)",
+      "rgb(255, 75, 75)"
+    ]
+  },
+  "typography": {
+    "uniqueFamilies": [
+      "DIN",
+      "Mono",
+      "monospace"
+    ],
+    "headings": {
+      "h1": {
+        "size": "16px",
+        "weight": "700",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "family": "DIN"
+      },
+      "h2": {
+        "size": "64px",
+        "weight": "700",
+        "lineHeight": "55.36px",
+        "letterSpacing": "normal",
+        "family": "DIN"
+      },
+      "h3": {
+        "size": "16px",
+        "weight": "600",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "family": "DIN"
+      }
+    },
+    "body": {
+      "size": "20px",
+      "weight": "600",
+      "lineHeight": "25px",
+      "family": "DIN",
+      "maxWidth": "336px"
+    }
+  },
+  "layout": {
+    "bodyPadding": "0px",
+    "containerMaxWidth": "1500px",
+    "containerPadding": "0px",
+    "containerWidth": "1440px"
+  },
+  "effects": {
+    "radii": [
+      "50%",
+      "4px",
+      "0px 12px 0px 0px",
+      "20px",
+      "4px 4px 0px 0px",
+      "0px 0px 4px 4px",
+      "12px",
+      "2px"
+    ],
+    "shadows": [],
+    "transitions": [
+      "all",
+      "filter 0.125s",
+      "opacity 0.125s, color 0.125s",
+      "transform 0.125s ease-out",
+      "color 0.1s ease-out, background-color 0.1s ease-out, opacity 0.1s ease-out",
+      "transform 0.5s ease-out"
+    ]
+  },
+  "cards": [
+    {
+      "selector": "div.responsive-viewport",
+      "width": "322px",
+      "height": "201px",
+      "ratio": "1.60:1",
+      "radius": "50px",
+      "shadow": null
+    }
+  ],
+  "images": [
+    {
+      "src": "https://animejs.com/assets/images/anime-js-logo-v4.svg",
+      "naturalWidth": 580,
+      "naturalHeight": 118,
+      "ratio": "4.92:1",
+      "renderedWidth": "118px",
+      "role": "thumbnail"
+    },
+    {
+      "src": "https://animejs.com/media/pages/sponsors/platinum-sponsors/973aa34310-1769187540/sponsor-placeholder.svg",
+      "naturalWidth": 162,
+      "naturalHeight": 162,
+      "ratio": "1.00:1",
+      "renderedWidth": "48px",
+      "role": "thumbnail"
+    },
+    {
+      "src": "https://animejs.com/media/pages/sponsors/platinum-sponsors/973aa34310-1769187540/sponsor-placeholder.svg",
+      "naturalWidth": 162,
+      "naturalHeight": 162,
+      "ratio": "1.00:1",
+      "renderedWidth": "107px",
+      "role": "thumbnail"
+    },
+    {
+      "src": "https://avatars.githubusercontent.com/u/38730517?u=305b8b15a7cd43488d594f3ce28b4ef2951217b5&v=4",
+      "naturalWidth": 460,
+      "naturalHeight": 460,
+      "ratio": "1.00:1",
+      "renderedWidth": "28px",
+      "role": "thumbnail"
+    },
+    {
+      "src": "https://avatars.githubusercontent.com/u/78906517?u=924a27cbee3db7e0ece5cc1509921402e1445e74&v=4",
+      "naturalWidth": 460,
+      "naturalHeight": 460,
+      "ratio": "1.00:1",
+      "renderedWidth": "28px",
+      "role": "thumbnail"
+    },
+    {
+      "src": "https://avatars.githubusercontent.com/u/3807302?v=4",
+      "naturalWidth": 420,
+      "naturalHeight": 420,
+      "ratio": "1.00:1",
+      "renderedWidth": "28px",
+      "role": "thumbnail"
+    },
+    {
+      "src": "https://avatars.githubusercontent.com/u/374134?v=4",
+      "naturalWidth": 420,
+      "naturalHeight": 420,
+      "ratio": "1.00:1",
+      "renderedWidth": "28px",
+      "role": "thumbnail"
+    },
+    {
+      "src": "https://avatars.githubusercontent.com/u/5545171?u=ba1b5f5376949d6ab5a451c1587de028768904b1&v=4",
+      "naturalWidth": 460,
+      "naturalHeight": 460,
+      "ratio": "1.00:1",
+      "renderedWidth": "28px",
+      "role": "thumbnail"
+    },
+    {
+      "src": "https://avatars.githubusercontent.com/u/38714423?u=fd32f0f31a466f8de51d5d13008019cbd93843f2&v=4",
+      "naturalWidth": 460,
+      "naturalHeight": 460,
+      "ratio": "1.00:1",
+      "renderedWidth": "28px",
+      "role": "thumbnail"
+    },
+    {
+      "src": "https://avatars.githubusercontent.com/u/1417323?u=12876f6373e65427454a3616b219e1d3f3c78a8e&v=4",
+      "naturalWidth": 460,
+      "naturalHeight": 460,
+      "ratio": "1.00:1",
+      "renderedWidth": "28px",
+      "role": "thumbnail"
+    }
+  ],
+  "spacingSamples": [
+    {
+      "tag": "section",
+      "margin": "0px",
+      "padding": "0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "h1",
+      "margin": "0px",
+      "padding": "0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "h2",
+      "margin": "0px 0px 23.36px",
+      "padding": "0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "h3",
+      "margin": "0px 0px 8px",
+      "padding": "0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "p",
+      "margin": "0px 0px 24px",
+      "padding": "0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "ul",
+      "margin": "0px",
+      "padding": "0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "nav",
+      "margin": "0px",
+      "padding": "0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "footer",
+      "margin": "0px",
+      "padding": "0px 24px 24px",
+      "gap": "normal"
+    }
+  ],
+  "sectionGaps": [],
+  "grid": null,
+  "focusVisible": false,
+  "reducedMotion": false
+}

@@ -1,0 +1,82 @@
+---
+/**
+ * Base.astro — the full HTML document shell.
+ * Owns <head> meta, OpenGraph/Twitter tags, font preloads, and global.css.
+ * All pages render their content into the default slot.
+ *
+ * Props:
+ *   title?: string        // <title>; falls back to the default below
+ *   description?: string  // meta description / OG description
+ *   path?: string         // page path for canonical/OG url (default "/")
+ */
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  path?: string;
+}
+
+const DEFAULT_TITLE = "Luc Beck · EE and AI at Penn";
+const DEFAULT_DESC =
+  "Electrical Engineering and AI at Penn. I do biophysics research on DNA nanoswitches and build systems that learn.";
+
+const {
+  title = DEFAULT_TITLE,
+  description = DEFAULT_DESC,
+  path = "/",
+} = Astro.props;
+
+const canonical = new URL(path, Astro.site ?? "https://lucbeck.com").href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content="Luc Beck" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0A0B0D" />
+    <link rel="canonical" href={canonical} />
+
+    <!-- Favicon (placeholder) -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Font preloads: the two most critical faces (Cabinet display 700, Hanken body 400) -->
+    <link
+      rel="preload"
+      href="/fonts/CabinetGrotesk-Bold.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/HankenGrotesk-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <!-- OpenGraph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Luc Beck" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

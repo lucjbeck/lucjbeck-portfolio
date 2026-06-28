@@ -1,0 +1,63 @@
+---
+/**
+ * CatalogNumber — the structural-spine device (wodniack datasheet look).
+ * Renders a crisp mono catalog tag, e.g. `FIG. 01`, `SPEC-01`, `ROLE-02`.
+ *
+ * Props:
+ *   label: string                       // the tag text (required, e.g. "FIG. 01")
+ *   tone?: "accent" | "faint"           // color: accent (default) or faint annotation
+ *   as?: keyof HTMLElementTagNameMap    // element (default "span")
+ *   boxed?: boolean                     // wrap in a hairline pill cell (default false)
+ *   class?: string
+ */
+interface Props {
+  label: string;
+  tone?: "accent" | "faint";
+  as?: keyof HTMLElementTagNameMap;
+  boxed?: boolean;
+  class?: string;
+}
+
+const {
+  label,
+  tone = "accent",
+  as: Tag = "span",
+  boxed = false,
+  class: className,
+} = Astro.props;
+---
+
+<Tag
+  class:list={[
+    "catalog",
+    `catalog--${tone}`,
+    boxed && "catalog--boxed",
+    className,
+  ]}
+>
+  {label}
+</Tag>
+
+<style>
+  .catalog {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    font-weight: var(--fw-medium);
+    line-height: var(--lh-mono);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+  .catalog--accent {
+    color: var(--c-accent);
+  }
+  .catalog--faint {
+    color: var(--c-text-faint);
+  }
+  .catalog--boxed {
+    padding: var(--space-1) var(--space-3);
+    border: var(--border);
+    border-radius: var(--r-pill);
+  }
+</style>

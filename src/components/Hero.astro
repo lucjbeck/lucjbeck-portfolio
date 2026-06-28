@@ -1,0 +1,139 @@
+---
+/**
+ * Hero — asymmetric opener. Headline + one-liner on the left, the NanoSwitch
+ * animation on the right. Fits the initial viewport (min-height via dvh).
+ * The animation agent owns NanoSwitch internals; we just mount it.
+ */
+import Container from "./Container.astro";
+import NanoSwitch from "./NanoSwitch.astro";
+---
+
+<section id="top" class="hero" aria-labelledby="hero-name">
+  <Container class="hero__inner">
+    <div class="hero__copy" data-reveal>
+      <p class="hero__eyebrow">
+        <span aria-hidden="true">EST.</span> Philadelphia / Boston
+        <span class="hero__eyebrow-tag">SPECIMEN 00</span>
+      </p>
+
+      <h1 id="hero-name" class="hero__name">Luc Beck</h1>
+
+      <p class="hero__lede">
+        Electrical Engineering and AI at Penn. I do biophysics research on DNA
+        nanoswitches and build systems that learn.
+      </p>
+
+      <p class="hero__meta">
+        <span class="hero__meta-item">EE + AI, UPenn</span>
+        <span class="hero__meta-sep" aria-hidden="true">/</span>
+        <span class="hero__meta-item">Biophysics research</span>
+        <span class="hero__meta-sep" aria-hidden="true">/</span>
+        <span class="hero__meta-item">Robotics</span>
+      </p>
+    </div>
+
+    <div class="hero__figure" data-reveal>
+      <NanoSwitch />
+      <p class="hero__caption">
+        <span aria-hidden="true">FIG. 00</span>
+        Nanoswitch, open conformation. Hover, click, or scroll to toggle.
+      </p>
+    </div>
+  </Container>
+</section>
+
+<style>
+  .hero {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    border-bottom: var(--border);
+    padding-block: var(--space-8);
+  }
+
+  .hero :global(.hero__inner) {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    align-items: center;
+    gap: clamp(var(--space-6), 4vw, var(--space-9));
+    width: 100%;
+  }
+
+  .hero__eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .hero__eyebrow-tag {
+    padding: var(--space-1) var(--space-3);
+    border: var(--border);
+    border-radius: var(--r-pill);
+    color: var(--c-accent);
+  }
+
+  .hero__name {
+    font-size: var(--fs-display-xl);
+    margin-bottom: var(--space-5);
+  }
+
+  .hero__lede {
+    max-width: 38ch;
+    font-size: var(--fs-body-l);
+    color: var(--c-text-muted);
+    margin-bottom: var(--space-6);
+  }
+
+  .hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .hero__meta-sep {
+    color: var(--c-hairline-strong);
+  }
+
+  .hero__figure {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .hero__caption {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    line-height: var(--lh-mono);
+    letter-spacing: 0.04em;
+  }
+  .hero__caption span {
+    color: var(--c-accent);
+  }
+
+  /* Stack on narrow viewports: copy first, figure below; still fits dvh. */
+  @media (max-width: 860px) {
+    .hero :global(.hero__inner) {
+      grid-template-columns: 1fr;
+      gap: var(--space-7);
+    }
+    .hero__figure {
+      order: -1;
+      max-width: 420px;
+    }
+  }
+</style>

@@ -1,0 +1,88 @@
+---
+/**
+ * Publication — a single publication credit row inside a ResearchEntry.
+ *
+ * Props:
+ *   role: string                 // e.g. "First author", "Patient perspective"
+ *   venue: string                // journal / venue name
+ *   href?: string                // article URL (omit for placeholder)
+ *   placeholder?: boolean        // mark the missing-link case
+ *   linkLabel?: string           // text for the link (default "Read")
+ *
+ * Slots: default — the citation / title text.
+ */
+interface Props {
+  role: string;
+  venue: string;
+  href?: string;
+  placeholder?: boolean;
+  linkLabel?: string;
+}
+
+const {
+  role,
+  venue,
+  href,
+  placeholder = false,
+  linkLabel = "Read",
+} = Astro.props;
+---
+
+<article class="pub" data-reveal>
+  <p class="pub__tags">
+    <span class="pub__role">{role}</span>
+    <span class="pub__venue">{venue}</span>
+  </p>
+  <p class="pub__title"><slot /></p>
+  {
+    href ? (
+      <a class="pub__link" href={href} target="_blank" rel="noopener noreferrer">
+        {linkLabel}
+        <span aria-hidden="true"> ↗</span>
+      </a>
+    ) : placeholder ? (
+      <span class="pub__link pub__link--ph">[PLACEHOLDER: link]</span>
+    ) : null
+  }
+</article>
+
+<style>
+  .pub {
+    padding-block: var(--space-4);
+    border-top: var(--border);
+  }
+  .pub:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .pub__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    margin-bottom: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .pub__role {
+    color: var(--c-accent);
+  }
+  .pub__venue {
+    color: var(--c-text-faint);
+  }
+
+  .pub__title {
+    color: var(--c-text);
+    margin-bottom: var(--space-2);
+  }
+
+  .pub__link {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+  .pub__link--ph {
+    color: var(--c-text-faint);
+  }
+</style>

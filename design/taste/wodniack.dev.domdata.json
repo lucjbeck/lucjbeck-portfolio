@@ -1,0 +1,155 @@
+{
+  "url": "https://wodniack.dev/",
+  "title": "AW - Creative Developer Freelance - France",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "colors": {
+    "pageBackground": "rgb(244, 12, 63)",
+    "backgroundColors": [
+      "rgb(22, 0, 0)",
+      "rgb(244, 12, 63)"
+    ],
+    "textColors": [
+      "rgba(0, 0, 0, 0)",
+      "rgb(244, 12, 63)",
+      "rgb(22, 0, 0)",
+      "rgb(0, 0, 238)",
+      "rgb(0, 0, 0)"
+    ],
+    "accentCandidates": [
+      "rgb(22, 0, 0)",
+      "rgb(0, 0, 238)",
+      "rgb(0, 0, 0)"
+    ]
+  },
+  "typography": {
+    "uniqueFamilies": [
+      "Fraktion Mono",
+      "Editorial New",
+      "Bigger Display"
+    ],
+    "headings": {
+      "h1": {
+        "size": "216px",
+        "weight": "700",
+        "lineHeight": "172.8px",
+        "letterSpacing": "-0.4px",
+        "family": "Bigger Display"
+      },
+      "h2": {
+        "size": "12px",
+        "weight": "700",
+        "lineHeight": "24px",
+        "letterSpacing": "1.2px",
+        "family": "Fraktion Mono"
+      }
+    },
+    "body": {
+      "size": "20px",
+      "weight": "200",
+      "lineHeight": "48px",
+      "family": "Editorial New",
+      "maxWidth": "none"
+    }
+  },
+  "layout": {
+    "bodyPadding": "16px",
+    "containerMaxWidth": "none",
+    "containerPadding": "0px",
+    "containerWidth": "1408px"
+  },
+  "effects": {
+    "radii": [
+      "15984px"
+    ],
+    "shadows": [],
+    "transitions": [
+      "all",
+      "translate 1s cubic-bezier(0.23, 1, 0.32, 1), scale 1.5s cubic-bezier(0.86, 0, 0.07, 1)",
+      "clip-path 0.8s cubic-bezier(0.86, 0, 0.07, 1)",
+      "scale 0.5s cubic-bezier(0.215, 0.61, 0.355, 1)",
+      "scale 0.2s cubic-bezier(0.215, 0.61, 0.355, 1), opacity 0.07s linear"
+    ]
+  },
+  "cards": [],
+  "images": [
+    {
+      "src": "https://wodniack.dev/images/asset-star.svg",
+      "naturalWidth": 150,
+      "naturalHeight": 150,
+      "ratio": "1.00:1",
+      "renderedWidth": "48px",
+      "role": "thumbnail"
+    }
+  ],
+  "spacingSamples": [
+    {
+      "tag": "section",
+      "margin": "0px",
+      "padding": "240px 0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "h1",
+      "margin": "0px",
+      "padding": "24px 0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "h2",
+      "margin": "0px",
+      "padding": "0px 0px 2px",
+      "gap": "normal"
+    },
+    {
+      "tag": "p",
+      "margin": "0px",
+      "padding": "0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "ul",
+      "margin": "0px",
+      "padding": "0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "button",
+      "margin": "0px",
+      "padding": "1px 6px",
+      "gap": "normal"
+    },
+    {
+      "tag": "nav",
+      "margin": "0px",
+      "padding": "0px",
+      "gap": "normal"
+    },
+    {
+      "tag": "footer",
+      "margin": "0px",
+      "padding": "24px",
+      "gap": "normal"
+    }
+  ],
+  "sectionGaps": [
+    {
+      "between": "section[0]→section[1]",
+      "gap": 36
+    },
+    {
+      "between": "section[1]→section[2]",
+      "gap": 36
+    }
+  ],
+  "grid": {
+    "columns": 4,
+    "gap": "normal",
+    "template": "157px 157px 157px 157px",
+    "selector": "ul.s__awards.astro-am7g2yfn"
+  },
+  "focusVisible": false,
+  "reducedMotion": false
+}

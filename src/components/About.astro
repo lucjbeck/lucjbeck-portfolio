@@ -1,0 +1,87 @@
+---
+/**
+ * About — the verbatim positioning paragraph plus a flagged placeholder line
+ * for personal interests (not invented). Asymmetric: a mono side-label column
+ * and the prose column.
+ */
+---
+
+<div class="about" data-reveal-group="about">
+  <div class="about__aside" data-reveal>
+    <p class="about__label">Abstract</p>
+    <p class="about__note">
+      The thread: figure out exactly how a system works, then build the thing
+      that should exist.
+    </p>
+  </div>
+
+  <div class="about__prose" data-reveal>
+    <p class="about__lead">
+      I study electrical engineering and artificial intelligence at the
+      University of Pennsylvania. My research is in biophysics: I build
+      mathematical models of how DNA nanoswitches change shape and bind, work
+      that has fed into a drug-discovery platform now developing therapeutics. I
+      also build things that move and learn, like a robotic arm I trained with
+      imitation learning. The thread across all of it is figuring out exactly
+      how a system works, then building the thing that should exist.
+    </p>
+
+    <!-- PLACEHOLDER: one or two sentences of personal interests outside the
+         lab, in Luc's own voice. Not invented; rendered as a flagged note. -->
+    <p class="about__placeholder">
+      [PLACEHOLDER: one or two sentences of personal interests outside the lab,
+      in Luc's own voice.]
+    </p>
+  </div>
+</div>
+
+<style>
+  .about {
+    display: grid;
+    grid-template-columns: minmax(10rem, 14rem) 1fr;
+    gap: clamp(var(--space-5), 4vw, var(--space-8));
+  }
+
+  .about__aside {
+    border-top: var(--border-strong);
+    padding-top: var(--space-3);
+  }
+  .about__label {
+    margin-bottom: var(--space-3);
+    color: var(--c-accent);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .about__note {
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-mono);
+  }
+
+  .about__prose {
+    max-width: var(--maxw-prose);
+  }
+  .about__lead {
+    font-size: var(--fs-body-l);
+    color: var(--c-text);
+  }
+  .about__placeholder {
+    margin-top: var(--space-5);
+    padding: var(--space-3) var(--space-4);
+    border: 1px dashed var(--c-hairline-strong);
+    border-radius: var(--r-md);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+
+  @media (max-width: 720px) {
+    .about {
+      grid-template-columns: 1fr;
+      gap: var(--space-5);
+    }
+  }
+</style>

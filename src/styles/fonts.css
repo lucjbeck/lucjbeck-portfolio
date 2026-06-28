@@ -1,0 +1,73 @@
+/* ============================================================================
+   Self-hosted fonts — three roles, no Inter (brief mandate).
+   Method: all three families downloaded as woff2 into /public/fonts and
+   declared here by hand. One consistent self-hosting method.
+     Display: Cabinet Grotesk  (Fontshare; weights 500/700/800)
+     Body:    Hanken Grotesk   (Fontsource woff2; weights 400/500/700)
+     Mono:    JetBrains Mono   (Fontsource woff2; weights 400/500)
+   font-display: swap on every face. Critical faces (Cabinet 700, Hanken 400)
+   are <link rel="preload">'d in Base.astro <head>.
+   Files live in /public/fonts, so absolute "/fonts/..." URLs resolve at root.
+   ============================================================================ */
+
+/* ---- Display: Cabinet Grotesk ------------------------------------------- */
+@font-face {
+  font-family: "Cabinet Grotesk";
+  src: url("/fonts/CabinetGrotesk-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cabinet Grotesk";
+  src: url("/fonts/CabinetGrotesk-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cabinet Grotesk";
+  src: url("/fonts/CabinetGrotesk-Extrabold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---- Body: Hanken Grotesk ----------------------------------------------- */
+@font-face {
+  font-family: "Hanken Grotesk";
+  src: url("/fonts/HankenGrotesk-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Hanken Grotesk";
+  src: url("/fonts/HankenGrotesk-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Hanken Grotesk";
+  src: url("/fonts/HankenGrotesk-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---- Mono: JetBrains Mono ----------------------------------------------- */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}

@@ -1,0 +1,174 @@
+/* ============================================================================
+   global.css — the shipped global stylesheet.
+   Order matters: tokens (variables) → fonts (@font-face) → reset → base.
+   Consumes design tokens; does NOT redefine them.
+   ============================================================================ */
+@import "./tokens.css";
+@import "./fonts.css";
+
+/* ---- Reset (modern, minimal) ------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+picture,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+ul[role="list"],
+ol[role="list"] {
+  list-style: none;
+  padding: 0;
+}
+
+/* ---- Headings (display role) ------------------------------------------- */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--fs-display-l);
+  line-height: var(--lh-display);
+  letter-spacing: var(--ls-display);
+}
+
+h2 {
+  font-size: var(--fs-h2);
+}
+
+h3 {
+  font-size: var(--fs-h3);
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* ---- Links (one accent) ------------------------------------------------ */
+a {
+  color: var(--c-accent);
+  text-decoration: none;
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+a:hover {
+  color: var(--c-accent-hover);
+  text-decoration: underline;
+}
+
+/* ---- Visible keyboard focus -------------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* ---- Selection --------------------------------------------------------- */
+::selection {
+  background: var(--c-accent-dim);
+  color: var(--c-text);
+}
+
+/* ---- Mono utility ------------------------------------------------------ */
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* ---- Hairline grid / drawn-border utilities (wodniack datasheet device) -
+   Structure via borders, not shadow. Use .hairline-cell for a single ruled
+   cell, or wrap children in .hairline-grid for a datasheet block where every
+   cell is divided by hairlines. */
+.hairline-cell {
+  border: var(--border);
+  border-radius: var(--r-md);
+}
+
+.hairline-grid {
+  display: grid;
+  border: var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--c-hairline);
+  gap: 1px;
+}
+
+.hairline-grid > * {
+  background: var(--c-bg);
+}
+
+/* Drawn top rule, like a datasheet section divider. */
+.hairline-rule {
+  border-top: var(--border);
+}
+
+/* ---- Reduced motion (brief mandate) ------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

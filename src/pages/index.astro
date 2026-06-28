@@ -1,0 +1,164 @@
+---
+/**
+ * index.astro — Luc Beck portfolio home (single long editorial page).
+ * Assembles: Nav, Hero (mounts NanoSwitch), then the catalogued sections, then
+ * the contact footer. Catalog numbering is the structural spine: nav indices
+ * number the sections; entry tags (FIG./SPEC./ROLE.) number the specimens.
+ * All copy is verbatim from the brief. Placeholders are flagged in markup.
+ */
+import Base from "../layouts/Base.astro";
+import Nav from "../components/Nav.astro";
+import Hero from "../components/Hero.astro";
+import Section from "../components/Section.astro";
+import About from "../components/About.astro";
+import EducationList from "../components/EducationList.astro";
+import ProjectEntry from "../components/ProjectEntry.astro";
+import ResearchEntry from "../components/ResearchEntry.astro";
+import Publication from "../components/Publication.astro";
+import RoleEntry from "../components/RoleEntry.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+---
+
+<Base>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <Nav />
+
+  <main id="main">
+    <Hero />
+
+    <Section id="about" eyebrow="00" heading="About">
+      <About />
+    </Section>
+
+    <Section id="education" eyebrow="01" heading="Education" rule>
+      <EducationList />
+    </Section>
+
+    <Section id="engineering" eyebrow="02" heading="Engineering" rule>
+      <ProjectEntry
+        tag="FIG. 01"
+        title="Robotic Arm + ACT Policy"
+        specs={[
+          { label: "Capability", value: "[PLACEHOLDER]", placeholder: true },
+          { label: "Demo", value: "[PLACEHOLDER]", placeholder: true },
+          { label: "Code", value: "[PLACEHOLDER]", placeholder: true },
+        ]}
+      >
+        <p>
+          Built a robotic arm and trained an action-chunking-with-transformers
+          (ACT) policy on it using Hugging Face / LeRobot.
+        </p>
+      </ProjectEntry>
+    </Section>
+
+    <Section id="research" eyebrow="03" heading="Research" rule>
+      <ResearchEntry
+        tag="SPEC-01"
+        title="DNA Nanoswitches for Drug Discovery"
+        org="Wong Lab, Wyss Institute / Boston Children's Hospital / Harvard"
+        period="2023 to 2025"
+      >
+        <p>
+          Three summers building a DNA-nanoswitch platform for therapeutic
+          discovery. I derived polymer-physics and enzyme-kinetic models
+          predicting nanoswitch conformational states, reaction rates, and
+          binding equilibria, and used AlphaFold and Python to model
+          nanobody-target interactions across autoimmune and viral pathways. I
+          ran native PAGE gel-shift assays measuring binding enhancement of
+          nanoswitch-discovered nanobodies on the PD-1/PD-L1 complex implicated
+          in autoimmune disease. The platform has since spun into a company
+          developing therapeutics, with candidates advancing toward clinical
+          trials.
+        </p>
+
+        <Fragment slot="publications">
+          <Publication
+            role="First author"
+            venue="Journal of Emerging Investigators"
+            placeholder={true}
+          >
+            Tethered Molecular Interactions in DNA Nanoswitches: Modeling and
+            Controlling Local Concentration. With Harvard Medical School
+            professor Wesley Wong.
+          </Publication>
+          <Publication
+            role="Patient perspective"
+            venue="The Lancet Rheumatology"
+            href="https://www.thelancet.com/journals/lanrhe/article/PIIS2665-9913(24)00203-0/abstract"
+            linkLabel="Read"
+          >
+            A patient perspective published in The Lancet Rheumatology.
+          </Publication>
+        </Fragment>
+      </ResearchEntry>
+    </Section>
+
+    <Section id="experience" eyebrow="04" heading="Experience" rule>
+      <div class="roles">
+        <RoleEntry
+          tag="ROLE-01"
+          firm="Northpond Ventures"
+          role="Venture Capital Intern"
+          term="Summers 2024 and 2025"
+          location="Cambridge, MA"
+        >
+          <p>
+            Evaluated spinning DNA-nanoswitch drug-discovery technology out into
+            a company, analyzing platform scalability, IP positioning, and
+            commercialization strategy. Built the financial model, including a
+            risk-adjusted revenue build, DCF, and sensitivity analyses across
+            clinical phases. Authored scientific positioning on nanoswitch-based
+            therapies for Type 1 Diabetes, covering PD-1/PD-L1 agonist
+            mechanisms and the competitive landscape. The work fed into a $15M
+            seed round.
+          </p>
+        </RoleEntry>
+
+        <RoleEntry tag="ROLE-02" firm="Construct Capital" term="Summer 2025">
+          <p>
+            Built AI agent infrastructure that streamlines the firm's internal
+            workflows and the screening of inbound companies, accelerating them
+            through the deal pipeline.
+          </p>
+        </RoleEntry>
+      </div>
+    </Section>
+  </main>
+
+  <SiteFooter />
+</Base>
+
+<style>
+  /* Accessible skip link: hidden until focused. */
+  .skip-link {
+    position: absolute;
+    left: var(--space-4);
+    top: var(--space-4);
+    z-index: calc(var(--z-nav) + 10);
+    padding: var(--space-2) var(--space-4);
+    background: var(--c-bg-elev-2);
+    border: var(--border-strong);
+    border-radius: var(--r-md);
+    color: var(--c-text);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    transform: translateY(-200%);
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+
+  /* Two role entries share a hairline-joined stack. */
+  .roles {
+    display: grid;
+    gap: var(--space-6);
+  }
+</style>
+
+<script>
+  // Scroll-reveal + spring micro-interactions (self-init by scanning their
+  // data-attributes; see design/ANIMATION-NOTES.md for the contract).
+  import "../scripts/reveal.ts";
+  import "../scripts/micro.ts";
+</script>

@@ -1,0 +1,128 @@
+---
+/**
+ * EducationList — a datasheet of rows: each row is a labeled field rendered as
+ * a hairline-divided cell pair (mono label + value). The drawn-grid device.
+ * Placeholders flagged in markup and surfaced in the agent report.
+ */
+const rows = [
+  {
+    label: "Institution",
+    value: "University of Pennsylvania",
+    note: "School of Engineering and Applied Science",
+  },
+  {
+    label: "Degree",
+    value: "B.S.E., Electrical Engineering and Artificial Intelligence",
+    note: "Dual major",
+  },
+  {
+    label: "GPA",
+    value: "3.96",
+    note: null,
+  },
+  {
+    /* PLACEHOLDER: graduation year — supplied by Luc. */
+    label: "Class of",
+    value: "[PLACEHOLDER]",
+    note: "Graduation year",
+    placeholder: true,
+  },
+  {
+    /* PLACEHOLDER: relevant coursework — real course list from Luc. */
+    label: "Coursework",
+    value: "[PLACEHOLDER]",
+    note: "Relevant coursework",
+    placeholder: true,
+  },
+  {
+    label: "Honors",
+    value: "U.S. Presidential Scholar",
+    note: "One of up to 161 students named nationally each year",
+  },
+  {
+    label: "Honors",
+    value: "Perfect 36 on the ACT",
+    note: null,
+  },
+];
+---
+
+<dl class="edu" data-reveal-group="education">
+  {
+    rows.map((row) => (
+      <div class="edu__row" data-reveal>
+        <dt class="edu__label">{row.label}</dt>
+        <dd class="edu__value">
+          <span
+            class:list={["edu__primary", row.placeholder && "edu__primary--ph"]}
+          >
+            {row.value}
+          </span>
+          {row.note && <span class="edu__note">{row.note}</span>}
+        </dd>
+      </div>
+    ))
+  }
+</dl>
+
+<style>
+  .edu {
+    margin: 0;
+    border: var(--border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+  }
+
+  .edu__row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 12rem) 1fr;
+    border-top: var(--border);
+  }
+  .edu__row:first-child {
+    border-top: none;
+  }
+
+  .edu__label {
+    padding: var(--space-4) var(--space-5);
+    border-right: var(--border);
+    background: var(--c-bg-elev);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+
+  .edu__value {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-4) var(--space-5);
+    margin: 0;
+  }
+
+  .edu__primary {
+    color: var(--c-text);
+    font-weight: var(--fw-medium);
+  }
+  .edu__primary--ph {
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+
+  .edu__note {
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+  }
+
+  @media (max-width: 560px) {
+    .edu__row {
+      grid-template-columns: 1fr;
+    }
+    .edu__label {
+      border-right: none;
+      border-bottom: var(--border);
+    }
+  }
+</style>

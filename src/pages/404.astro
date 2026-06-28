@@ -1,0 +1,53 @@
+---
+/**
+ * 404.astro — understated, on-brand "specimen not found". Kept quiet: the
+ * site's one delight touch is the hero boop, so this is not a comedy bit.
+ */
+import Base from "../layouts/Base.astro";
+import Container from "../components/Container.astro";
+---
+
+<Base title="404 · Specimen not found · Luc Beck" path="/404">
+  <main class="nf">
+    <Container>
+      <p class="nf__tag">ERR / 404</p>
+      <h1 class="nf__title">Specimen not found.</h1>
+      <p class="nf__body">
+        This record is not in the catalog. It may have moved, or it never
+        existed.
+      </p>
+      <p class="nf__back">
+        <a href="/">Return to the index</a>
+      </p>
+    </Container>
+  </main>
+</Base>
+
+<style>
+  .nf {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+  }
+  .nf__tag {
+    margin-bottom: var(--space-4);
+    color: var(--c-accent);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .nf__title {
+    font-size: var(--fs-display-l);
+    margin-bottom: var(--space-4);
+  }
+  .nf__body {
+    max-width: 46ch;
+    color: var(--c-text-muted);
+    margin-bottom: var(--space-6);
+  }
+  .nf__back a {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+</style>

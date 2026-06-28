@@ -1,0 +1,100 @@
+---
+/**
+ * ResearchEntry — a catalogued research specimen. Hairline cell with a mono
+ * catalog tag, title, an institution/date metadata line, the blurb, and an
+ * optional list of publication credits.
+ *
+ * Props:
+ *   tag: string         // e.g. "SPEC-01"
+ *   title: string
+ *   org: string         // institution line
+ *   period: string      // e.g. "2023 - 2025"
+ *
+ * Slots: default — the research blurb. "publications" — publication credits.
+ */
+import CatalogNumber from "./CatalogNumber.astro";
+
+interface Props {
+  tag: string;
+  title: string;
+  org: string;
+  period: string;
+}
+
+const { tag, title, org, period } = Astro.props;
+const hasPublications = Astro.slots.has("publications");
+---
+
+<article class="entry hairline-cell" data-reveal>
+  <header class="entry__head">
+    <CatalogNumber label={tag} />
+    <h3 class="entry__title">{title}</h3>
+    <p class="entry__meta">
+      <span class="entry__org">{org}</span>
+      <span class="entry__period">{period}</span>
+    </p>
+  </header>
+
+  <div class="entry__body">
+    <slot />
+  </div>
+
+  {
+    hasPublications && (
+      <div class="entry__pubs">
+        <p class="entry__pubs-label">Publications</p>
+        <slot name="publications" />
+      </div>
+    )
+  }
+</article>
+
+<style>
+  .entry {
+    padding: clamp(var(--space-5), 3vw, var(--space-7));
+  }
+
+  .entry__head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+  .entry__title {
+    font-size: var(--fs-h3);
+  }
+
+  .entry__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .entry__period {
+    color: var(--c-accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .entry__body {
+    max-width: var(--maxw-prose);
+    color: var(--c-text-muted);
+  }
+
+  .entry__pubs {
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: var(--border);
+  }
+  .entry__pubs-label {
+    margin-bottom: var(--space-4);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+</style>

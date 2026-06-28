@@ -1,0 +1,149 @@
+---
+/**
+ * ============================================================================
+ *  NanoSwitch.astro  —  HERO ANIMATION  (the conformational switch)
+ *  Owned by the signature-animation agent.
+ * ============================================================================
+ *
+ *  A stylized DNA nanoswitch rendered as a node-and-edge structure with two
+ *  conformations:
+ *    - "open"   : an extended, splayed double-strand (the resolved SSR state).
+ *    - "closed" : the strand ends bind and the structure loops shut.
+ *
+ *  MOUNT CONTRACT (kept from FOUNDATION-NOTES):
+ *    1. Mount id ........ #nanoswitch
+ *    2. SVG structure ... inline <svg> inside #nanoswitch with
+ *         nodes:  <circle class="ns-node" data-node="N">
+ *         edges:  <path   class="ns-edge" data-edge="A-B">
+ *       Edges are <path> (not <line>) so anime.js svg.morphTo can morph them.
+ *    3. Script entry .... the module <script> at the bottom imports
+ *         ../scripts/nanoswitch.ts which builds the assembly->settle->morph
+ *         timeline and lazy-inits when the hero nears the viewport.
+ *    4. Reduced motion .. the markup below IS the final resolved "open"
+ *         conformation. It is complete and legible with zero JS, so
+ *         prefers-reduced-motion / no-JS users see a correct static figure.
+ *    5. Sizing .......... viewBox + width:100%; no fixed pixel height.
+ *
+ *  CONFORMATION DATA
+ *    Every node carries data-open-x/y (== its rendered cx/cy) and
+ *    data-closed-x/y. Every edge carries data-open-d (== its rendered d) and
+ *    data-closed-d. The script reads these so all geometry lives here, in the
+ *    component, and JS stays geometry-agnostic.
+ * ============================================================================
+ */
+
+// --- Geometry (single source of truth; mirrored into the markup below) -----
+// viewBox 0 0 440 320. Two parallel strands (A: nodes 0-4, B: nodes 5-8) that
+// splay open, then bind end-to-end into a closed loop.
+const VW = 440;
+const VH = 320;
+
+type Pt = { x: number; y: number };
+
+// OPEN: extended double strand, gently splayed (relaxed / "unbound").
+const open: Pt[] = [
+  { x: 60,  y: 96  }, // 0  strand A start
+  { x: 138, y: 74  }, // 1
+  { x: 220, y: 70  }, // 2  (apex / focal)
+  { x: 302, y: 78  }, // 3
+  { x: 384, y: 104 }, // 4  strand A end
+  { x: 96,  y: 196 }, // 5  strand B start
+  { x: 180, y: 224 }, // 6
+  { x: 264, y: 226 }, // 7
+  { x: 348, y: 204 }, // 8  strand B end
+];
+
+// CLOSED: the ends bind; the two strands draw together into a looped ring.
+const closed: Pt[] = [
+  { x: 150, y: 80  }, // 0
+  { x: 214, y: 60  }, // 1
+  { x: 290, y: 88  }, // 2
+  { x: 318, y: 158 }, // 3
+  { x: 286, y: 226 }, // 4
+  { x: 132, y: 138 }, // 5
+  { x: 154, y: 214 }, // 6
+  { x: 214, y: 252 }, // 7
+  { x: 282, y: 232 }, // 8
+];
+
+// Edges: backbone of each strand + cross-links ("base pairs") + the closing
+// bonds that only read as "bonds" once looped.
+const edgeList: Array<[number, number]> = [
+  [0, 1], [1, 2], [2, 3], [3, 4],          // strand A backbone
+  [5, 6], [6, 7], [7, 8],                   // strand B backbone
+  [1, 5], [2, 6], [3, 7],                   // cross-links (base pairs)
+  [4, 8],                                   // closing bond (ends bind)
+  [0, 5],                                   // anchoring bond
+];
+
+const path = (a: Pt, b: Pt) => `M${a.x},${a.y} L${b.x},${b.y}`;
+const nodeR = (i: number) => (i === 2 ? 13 : i === 7 ? 11 : i === 0 || i === 8 ? 9 : 8);
+---
+
+<div id="nanoswitch" class="nanoswitch" role="img" aria-label="Stylized DNA nanoswitch: a node-and-edge structure in its open conformation">
+  <svg class="ns-svg" viewBox={`0 0 ${VW} ${VH}`} fill="none" aria-hidden="true">
+    <!-- edges (paths so they can morph open<->closed) -->
+    {edgeList.map(([a, b]) => (
+      <path
+        class="ns-edge"
+        data-edge={`${a}-${b}`}
+        data-open-d={path(open[a], open[b])}
+        data-closed-d={path(closed[a], closed[b])}
+        d={path(open[a], open[b])}
+      />
+    ))}
+    <!-- nodes -->
+    {open.map((p, i) => (
+      <circle
+        class:list={["ns-node", { "ns-node--focal": i === 2 }]}
+        data-node={i}
+        data-open-x={p.x}
+        data-open-y={p.y}
+        data-closed-x={closed[i].x}
+        data-closed-y={closed[i].y}
+        cx={p.x}
+        cy={p.y}
+        r={nodeR(i)}
+      />
+    ))}
+  </svg>
+</div>
+
+<style>
+  .nanoswitch {
+    width: 100%;
+    max-width: 600px;
+    margin-inline: auto;
+    /* a faint instrument glow behind the structure */
+    filter: drop-shadow(0 0 28px rgba(52, 214, 201, 0.10));
+  }
+  .ns-svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    cursor: pointer;
+  }
+  .ns-edge {
+    stroke: var(--c-hairline-strong);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .ns-node {
+    fill: var(--c-bg-elev-2);
+    stroke: var(--c-accent);
+    stroke-width: 1.5;
+    /* transform-box/origin so JS scale boops pivot on the node center */
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  /* single focal point carries the accent fill (one accent, spent on the verb) */
+  .ns-node--focal {
+    fill: var(--c-accent);
+    stroke: var(--c-accent);
+  }
+</style>
+
+<script>
+  import { initNanoSwitch } from "../scripts/nanoswitch.ts";
+  initNanoSwitch();
+</script>

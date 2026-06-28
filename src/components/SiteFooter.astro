@@ -1,0 +1,165 @@
+---
+/**
+ * SiteFooter — contact datasheet. A hairline grid of contact cells (email,
+ * GitHub, LinkedIn) plus one characterful sign-off line in the instrument voice.
+ * GitHub / LinkedIn are placeholders, flagged in markup and the report.
+ */
+import Container from "./Container.astro";
+
+const year = new Date().getFullYear();
+
+const contacts = [
+  {
+    label: "Email",
+    value: "lucjbeck@gmail.com",
+    href: "mailto:lucjbeck@gmail.com",
+  },
+  {
+    /* PLACEHOLDER: GitHub profile URL. */
+    label: "GitHub",
+    value: "[PLACEHOLDER]",
+    href: null,
+  },
+  {
+    /* PLACEHOLDER: LinkedIn profile URL. */
+    label: "LinkedIn",
+    value: "[PLACEHOLDER]",
+    href: null,
+  },
+];
+---
+
+<footer id="contact" class="footer">
+  <Container>
+    <div class="footer__head" data-reveal>
+      <p class="footer__eyebrow">
+        <span aria-hidden="true">END OF RECORD</span>
+      </p>
+      <h2 class="footer__heading">Get in touch.</h2>
+    </div>
+
+    <dl class="footer__grid" data-reveal-group="contact">
+      {
+        contacts.map((c) => (
+          <div class="footer__cell" data-reveal>
+            <dt class="footer__label">{c.label}</dt>
+            <dd class="footer__value">
+              {c.href ? (
+                <a href={c.href}>{c.value}</a>
+              ) : (
+                <span class="footer__ph">{c.value}</span>
+              )}
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+
+    <div class="footer__base" data-reveal>
+      <p class="footer__signoff">
+        Built like an instrument. Catalogued, measured, and shipped.
+      </p>
+      <p class="footer__legal">
+        <span aria-hidden="true">&copy; {year} Luc Beck</span>
+        <span class="footer__sep" aria-hidden="true">/</span>
+        <span>Philadelphia</span>
+      </p>
+    </div>
+  </Container>
+</footer>
+
+<style>
+  .footer {
+    border-top: var(--border);
+    padding-block: var(--section-y) var(--space-8);
+  }
+
+  .footer__head {
+    margin-bottom: var(--space-7);
+  }
+  .footer__eyebrow {
+    margin-bottom: var(--space-3);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .footer__heading {
+    font-size: var(--fs-display-l);
+  }
+
+  .footer__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin: 0 0 var(--space-8);
+    border: var(--border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+  }
+  .footer__cell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border-left: var(--border);
+  }
+  .footer__cell:first-child {
+    border-left: none;
+  }
+  .footer__label {
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .footer__value {
+    margin: 0;
+    word-break: break-word;
+  }
+  .footer__ph {
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+
+  .footer__base {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-top: var(--space-5);
+    border-top: var(--border);
+  }
+  .footer__signoff {
+    max-width: 44ch;
+    color: var(--c-text-muted);
+  }
+  .footer__legal {
+    display: flex;
+    gap: var(--space-3);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .footer__sep {
+    color: var(--c-hairline-strong);
+  }
+
+  @media (max-width: 640px) {
+    .footer__grid {
+      grid-template-columns: 1fr;
+    }
+    .footer__cell {
+      border-left: none;
+      border-top: var(--border);
+    }
+    .footer__cell:first-child {
+      border-top: none;
+    }
+  }
+</style>

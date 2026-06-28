@@ -1,0 +1,90 @@
+---
+/**
+ * Section — semantic <section> with vertical rhythm and an optional
+ * editorial header (catalog eyebrow + heading slot). Asymmetric-friendly:
+ * the header is NOT forced-centered.
+ *
+ * Props:
+ *   id?: string                 // anchor id
+ *   eyebrow?: string            // catalog tag text (e.g. "SPEC-01"); omit for none
+ *   eyebrowTone?: "accent" | "faint"
+ *   heading?: string            // convenience: renders an <h2>. Or use the "heading" slot.
+ *   class?: string
+ *   rule?: boolean              // draw a hairline top rule (datasheet divider)
+ *
+ * Slots:
+ *   "heading"  — custom heading markup (overrides the `heading` prop)
+ *   default    — section content
+ */
+import CatalogNumber from "./CatalogNumber.astro";
+import Container from "./Container.astro";
+
+interface Props {
+  id?: string;
+  eyebrow?: string;
+  eyebrowTone?: "accent" | "faint";
+  heading?: string;
+  class?: string;
+  rule?: boolean;
+}
+
+const {
+  id,
+  eyebrow,
+  eyebrowTone = "accent",
+  heading,
+  class: className,
+  rule = false,
+} = Astro.props;
+
+const hasHeader = Boolean(eyebrow || heading || Astro.slots.has("heading"));
+---
+
+<section
+  id={id}
+  class:list={["section", rule && "section--rule", className]}
+>
+  <Container>
+    {
+      hasHeader && (
+        <header class="section__header">
+          {eyebrow && (
+            <CatalogNumber
+              label={eyebrow}
+              tone={eyebrowTone}
+              class="section__eyebrow"
+            />
+          )}
+          {Astro.slots.has("heading") ? (
+            <slot name="heading" />
+          ) : (
+            heading && <h2 class="section__heading">{heading}</h2>
+          )}
+        </header>
+      )
+    }
+    <div class="section__body">
+      <slot />
+    </div>
+  </Container>
+</section>
+
+<style>
+  .section {
+    padding-block: var(--section-y);
+  }
+  .section--rule {
+    border-top: var(--border);
+  }
+  .section__header {
+    margin-bottom: var(--space-7);
+    max-width: var(--maxw-prose);
+  }
+  .section__eyebrow {
+    display: block;
+    margin-bottom: var(--space-3);
+  }
+  .section__heading {
+    font-size: var(--fs-display-l);
+  }
+</style>

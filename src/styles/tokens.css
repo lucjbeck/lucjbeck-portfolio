@@ -1,0 +1,122 @@
+/* ============================================================================
+   Luc Beck — Portfolio Design Tokens
+   "Specimen / Instrument" — dark, refined, one luminous accent, mono data texture.
+   Reconciled from /taste runs on animejs.com (#060606 mono shell + 1 accent,
+   morphing node field, mono chip) and wodniack.dev (warm near-black, oversized
+   display, 3-role type, drawn-grid datasheet, numbered catalog).
+   All values committed here. One accent. One radius scale. One theme.
+   ============================================================================ */
+
+:root {
+  /* ---- COLOR -------------------------------------------------------------
+     Base is a near-black with a faint cool/neutral cast (instrument, not warm
+     like wodniack, not pure-neutral like animejs — split the difference).
+     Never #000, never #fff. */
+  --c-bg:            #0A0B0D;   /* page base (off-black) */
+  --c-bg-elev:       #121419;   /* raised surfaces, cards, code chips */
+  --c-bg-elev-2:     #181B21;   /* hover / nested surface */
+  --c-hairline:      rgba(233, 237, 243, 0.10);  /* drawn-grid borders (wodniack device) */
+  --c-hairline-strong: rgba(233, 237, 243, 0.18);
+
+  --c-text:          #ECEFF3;   /* primary off-white (cool, AA ~16:1 on bg) */
+  --c-text-muted:    #A6ADB8;   /* secondary copy (AA ~7.5:1) */
+  --c-text-faint:    #6E7682;   /* mono annotations, labels (AA ~4.6:1, large/labels) */
+
+  /* ---- THE ONE ACCENT ----------------------------------------------------
+     "Specimen cyan": luminous blue-green = fluorescence / oscilloscope readout.
+     Deliberately NOT the banned acid-green or vermilion, and not coral-red
+     (animejs) or hot-pink-red (wodniack). Reads "scientific instrument".
+     #34D6C9 on --c-bg ≈ 11:1 contrast (AA/AAA). As a fill with --c-bg text ≈ 10:1.
+     ALTERNATE (documented, swap these 3 vars to switch): amber #F2B450. */
+  --c-accent:        #34D6C9;
+  --c-accent-hover:  #5FE3D8;
+  --c-accent-dim:    rgba(52, 214, 201, 0.14);  /* tints, focus rings, glows */
+  --c-accent-ink:    #04201E;   /* text/icon color when placed ON the accent */
+
+  --c-focus:         var(--c-accent);
+
+  /* ---- TYPE --------------------------------------------------------------
+     Three roles (brief), no Inter. Self-hosted woff2, font-display: swap.
+       Display: Cabinet Grotesk  (characterful grotesque, used large)
+       Body:    Hanken Grotesk   (clean modern sans)
+       Mono:    JetBrains Mono   (data texture: figure numbers, labels, code) */
+  --font-display: "Cabinet Grotesk", "Hanken Grotesk", system-ui, sans-serif;
+  --font-body:    "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Fluid type scale (clamp: min @360px ... max @1440px). Display set tight,
+     echoing wodniack's 0.8–1.0 leading. */
+  --fs-display-xl: clamp(3.25rem, 1.5rem + 7.6vw, 8rem);    /* hero name */
+  --fs-display-l:  clamp(2.25rem, 1.4rem + 3.8vw, 4.25rem); /* section openers */
+  --fs-h2:         clamp(1.625rem, 1.2rem + 1.9vw, 2.5rem);
+  --fs-h3:         clamp(1.25rem, 1.1rem + 0.7vw, 1.5rem);
+  --fs-body-l:     1.125rem;   /* 18px lead paragraphs */
+  --fs-body:       1rem;       /* 16px */
+  --fs-sm:         0.875rem;   /* 14px */
+  --fs-mono-label: 0.75rem;    /* 12px mono labels */
+  --fs-micro:      0.6875rem;  /* 11px figure numbers / margin annotations */
+
+  --lh-display: 0.96;
+  --lh-tight:   1.12;
+  --lh-body:    1.62;
+  --lh-mono:    1.45;
+
+  --ls-display: -0.02em;       /* tight tracking on big display */
+  --ls-tight:   -0.01em;
+  --ls-label:   0.14em;        /* uppercase mono labels / catalog tags */
+
+  --fw-body:    400;
+  --fw-medium:  500;
+  --fw-display: 700;
+
+  /* ---- SPACING (8px rhythm) ---------------------------------------------- */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-7:  48px;
+  --space-8:  64px;
+  --space-9:  96px;
+  --space-10: 128px;
+  --space-11: 160px;
+  --section-y: clamp(5rem, 3rem + 9vh, 9rem);  /* generous vertical section gaps */
+
+  /* ---- LAYOUT ------------------------------------------------------------ */
+  --maxw:        1240px;   /* content container */
+  --maxw-prose:  68ch;     /* readable measure for body copy */
+  --gutter:      clamp(1.25rem, 0.5rem + 3vw, 3rem);
+
+  /* ---- RADII (one scale, near-square instrument feel) -------------------- */
+  --r-sm:   3px;
+  --r-md:   6px;   /* default for chips, cards, inputs */
+  --r-lg:   10px;
+  --r-pill: 999px; /* catalog tags only */
+
+  /* ---- BORDERS / ELEVATION (structure via hairlines, not shadow soup) ---- */
+  --border:        1px solid var(--c-hairline);
+  --border-strong: 1px solid var(--c-hairline-strong);
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-2: 0 8px 30px rgba(0,0,0,0.45);
+  --glow-accent: 0 0 24px rgba(52, 214, 201, 0.22);  /* used sparingly on hero/accent */
+
+  /* ---- MOTION (anime.js + CSS; restrained, "function is the flex") ------- */
+  --dur-fast: 160ms;
+  --dur:      280ms;
+  --dur-slow: 560ms;
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);    /* expo-out, default reveal */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring-css: cubic-bezier(0.34, 1.56, 0.64, 1); /* CSS overshoot for hovers */
+  /* anime.js v4 params (consumed in JS, mirrored here for reference):
+       hero timeline ~1800ms total; node stagger 45ms;
+       createSpring({ stiffness: 120, damping: 14, mass: 1 }) for boops;
+       morph (open->closed conformation) 700ms ease-in-out. */
+  --stagger-node: 45ms;
+  --z-nav: 100;
+}
+
+/* Reduced motion: animations resolve instantly to final state (brief mandate). */
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur: 0ms; --dur-slow: 0ms; --stagger-node: 0ms; }
+}
