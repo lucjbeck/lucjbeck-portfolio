@@ -2,7 +2,7 @@
 /**
  * EducationList — a datasheet of rows: each row is a labeled field rendered as
  * a hairline-divided cell pair (mono label + value). The drawn-grid device.
- * Placeholders flagged in markup and surfaced in the agent report.
+ * The Coursework row renders grouped sub-lists (mono group head + body courses).
  */
 const rows = [
   {
@@ -15,32 +15,21 @@ const rows = [
     value: "B.S.E., Electrical Engineering and Artificial Intelligence",
     note: "Dual major",
   },
+  { label: "GPA", value: "3.96 / 4.00" },
+  { label: "Class of", value: "2029" },
   {
-    label: "GPA",
-    value: "3.96",
-    note: null,
-  },
-  {
-    label: "Class of",
-    value: "2029",
-    note: "Graduation year",
-  },
-  {
-    /* PLACEHOLDER: relevant coursework — real course list from Luc. */
     label: "Coursework",
-    value: "[PLACEHOLDER]",
-    note: "Relevant coursework",
-    placeholder: true,
+    groups: [
+      { head: "Computer Science", items: "Object-Oriented Programming, Scientific Computing" },
+      { head: "Mathematics", items: "Linear Algebra, Multivariable Calculus, Discrete Mathematics" },
+      { head: "Physics", items: "Mechanics, Electromagnetism" },
+      { head: "Economics", items: "Microeconomics, Macroeconomics" },
+    ],
   },
   {
     label: "Honors",
     value: "U.S. Presidential Scholar",
     note: "One of up to 161 students named nationally each year",
-  },
-  {
-    label: "Honors",
-    value: "Perfect 36 on the ACT",
-    note: null,
   },
 ];
 ---
@@ -51,12 +40,21 @@ const rows = [
       <div class="edu__row" data-reveal>
         <dt class="edu__label">{row.label}</dt>
         <dd class="edu__value">
-          <span
-            class:list={["edu__primary", row.placeholder && "edu__primary--ph"]}
-          >
-            {row.value}
-          </span>
-          {row.note && <span class="edu__note">{row.note}</span>}
+          {row.groups ? (
+            <div class="edu__groups">
+              {row.groups.map((g) => (
+                <div class="edu__group">
+                  <span class="edu__group-head">{g.head}</span>
+                  <span class="edu__group-items">{g.items}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Fragment>
+              <span class="edu__primary">{row.value}</span>
+              {row.note && <span class="edu__note">{row.note}</span>}
+            </Fragment>
+          )}
         </dd>
       </div>
     ))
@@ -103,15 +101,32 @@ const rows = [
     color: var(--c-text);
     font-weight: var(--fw-medium);
   }
-  .edu__primary--ph {
-    color: var(--c-text-faint);
-    font-family: var(--font-mono);
-    font-size: var(--fs-sm);
-  }
 
   .edu__note {
     color: var(--c-text-muted);
     font-size: var(--fs-sm);
+  }
+
+  /* Coursework groups: mono header + body course list, aligned to the grid. */
+  .edu__groups {
+    display: grid;
+    gap: var(--space-3);
+  }
+  .edu__group {
+    display: grid;
+    grid-template-columns: minmax(7rem, 9rem) 1fr;
+    gap: var(--space-4);
+    align-items: baseline;
+  }
+  .edu__group-head {
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+  .edu__group-items {
+    color: var(--c-text);
   }
 
   @media (max-width: 560px) {
@@ -121,6 +136,10 @@ const rows = [
     .edu__label {
       border-right: none;
       border-bottom: var(--border);
+    }
+    .edu__group {
+      grid-template-columns: 1fr;
+      gap: var(--space-1);
     }
   }
 </style>
