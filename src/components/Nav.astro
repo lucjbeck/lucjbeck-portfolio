@@ -18,14 +18,20 @@ const links = [
 <header class="nav">
   <a class="nav__wordmark" href="#top">
     <span class="nav__mark" aria-hidden="true">
-      <span class="nav__mark-num">29</span>
+      <span class="nav__mark-num">19</span>
       <span class="nav__mark-sym">Lb</span>
-      <span class="nav__mark-mass">3.95</span>
+      <span class="nav__mark-mass">'29</span>
     </span>
     <span class="nav__name">Luc Beck</span>
   </a>
 
-  <nav class="nav__links" aria-label="Primary">
+  <button class="nav__toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu">
+    <span class="nav__toggle-bar" aria-hidden="true"></span>
+    <span class="nav__toggle-bar" aria-hidden="true"></span>
+    <span class="nav__toggle-bar" aria-hidden="true"></span>
+  </button>
+
+  <nav id="nav-menu" class="nav__links" aria-label="Primary">
     <ul role="list" class="nav__list">
       {
         links.map((link) => (
@@ -79,8 +85,8 @@ const links = [
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 2.4rem;
-    height: 2.4rem;
+    width: 3.3rem;
+    height: 3.3rem;
     border: 1px solid var(--c-hairline-strong);
     border-radius: var(--r-sm);
     background: var(--c-bg-elev);
@@ -88,9 +94,9 @@ const links = [
   }
   .nav__mark-num {
     position: absolute;
-    top: 2px;
-    left: 3px;
-    font-size: 0.42rem;
+    top: 3px;
+    left: 4px;
+    font-size: 0.56rem;
     line-height: 1;
     letter-spacing: -0.08em;
     color: var(--c-text-faint);
@@ -98,9 +104,9 @@ const links = [
   }
   .nav__mark-mass {
     position: absolute;
-    bottom: 2px;
-    right: 3px;
-    font-size: 0.42rem;
+    bottom: 3px;
+    right: 4px;
+    font-size: 0.56rem;
     line-height: 1;
     letter-spacing: -0.08em;
     color: var(--c-text-faint);
@@ -109,7 +115,7 @@ const links = [
   .nav__mark-sym {
     font-family: var(--font-display);
     font-weight: var(--fw-display);
-    font-size: 0.82rem;
+    font-size: 1.15rem;
     line-height: 1;
     color: var(--c-accent);
     letter-spacing: 0;
@@ -118,6 +124,30 @@ const links = [
 
   .nav__name {
     color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+  }
+
+  /* hamburger toggle — hidden on desktop, shown at the mobile breakpoint */
+  .nav__toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--c-hairline-strong);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+  }
+  .nav__toggle-bar {
+    width: 20px;
+    height: 2px;
+    margin-inline: auto;
+    background: var(--c-text);
+    transition: transform var(--dur-fast) var(--ease-out),
+      opacity var(--dur-fast) var(--ease-out);
   }
 
   .nav__links {
@@ -159,22 +189,95 @@ const links = [
     font-size: var(--fs-micro);
   }
 
-  /* On small screens, hide the index numbers and the descriptive name; keep
-     labels usable. */
-  @media (max-width: 720px) {
-    .nav__name,
-    .nav__index {
-      display: none;
+  /* ── Mobile: collapse the link row into a hamburger dropdown ──────────── */
+  @media (max-width: 860px) {
+    .nav__toggle {
+      display: flex;
+    }
+
+    /* dropdown panel anchored under the bar; doesn't push content */
+    .nav__links {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: color-mix(in srgb, var(--c-bg) 96%, transparent);
+      backdrop-filter: blur(8px);
+      border-bottom: var(--border);
+      max-height: calc(100dvh - 100%);
+      overflow-y: auto;
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity var(--dur-fast) var(--ease-out),
+        transform var(--dur-fast) var(--ease-out),
+        visibility var(--dur-fast) var(--ease-out);
+    }
+    .nav.is-open .nav__links {
+      visibility: visible;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .nav__list {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+    .nav__item {
+      border-left: none;
+      border-top: var(--border);
+    }
+    .nav__item:first-child {
+      border-top: none;
     }
     .nav__link {
-      padding-inline: var(--space-3);
+      width: 100%;
+      min-height: 52px;
+      padding-inline: var(--gutter);
+      gap: var(--space-3);
+      font-size: var(--fs-sm);
     }
-  }
+    /* keep the index numbers visible in the dropdown — there's room here */
+    .nav__index {
+      min-width: 1.6em;
+    }
 
-  @media (max-width: 480px) {
-    .nav__list {
-      flex-wrap: wrap;
-      justify-content: flex-end;
+    /* open state: morph bars into an X */
+    .nav.is-open .nav__toggle-bar:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+    .nav.is-open .nav__toggle-bar:nth-child(2) {
+      opacity: 0;
+    }
+    .nav.is-open .nav__toggle-bar:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
     }
   }
 </style>
+
+<script>
+  // Mobile hamburger: toggle the dropdown; close it after a link is tapped or
+  // when the viewport grows back to desktop. Desktop ignores this entirely.
+  const header = document.querySelector<HTMLElement>(".nav");
+  const toggle = header?.querySelector<HTMLButtonElement>(".nav__toggle");
+  const menu   = header?.querySelector<HTMLElement>(".nav__links");
+
+  if (header && toggle && menu) {
+    const setOpen = (open: boolean) => {
+      header.classList.toggle("is-open", open);
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    };
+    toggle.addEventListener("click", () =>
+      setOpen(!header.classList.contains("is-open")));
+    menu.addEventListener("click", (e) => {
+      if ((e.target as HTMLElement).closest("a")) setOpen(false);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setOpen(false);
+    });
+    // Reset when crossing back to desktop so the panel never sticks "open".
+    const mq = window.matchMedia("(min-width: 861px)");
+    mq.addEventListener("change", (e) => { if (e.matches) setOpen(false); });
+  }
+</script>

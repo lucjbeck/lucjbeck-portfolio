@@ -83,6 +83,11 @@ const ticks = Array.from({ length: 9 }, (_, i) => 60 + i * 60);
   /* Let the arms paint past the panel edge instead of being clipped to the
      viewBox — they ride over the dark page background and stay visible. */
   .ab-svg { width: 100%; height: auto; display: block; overflow: visible; }
+  /* On phones the figure is full-width, so an overflowing arm would bleed to the
+     screen edge. Clip to the panel there (no page overflow). Desktop unchanged. */
+  @media (max-width: 860px) {
+    .ab-svg { overflow: hidden; }
+  }
   .ab-surface { fill: var(--c-bg-elev); stroke: var(--c-hairline-strong); stroke-width: 1.5; }
   .ab-grid line { stroke: var(--c-hairline); stroke-width: 1; }
 

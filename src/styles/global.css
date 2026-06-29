@@ -172,3 +172,15 @@ pre {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---- Mobile refinements (≤860px) — desktop is untouched above ----------- */
+@media (max-width: 860px) {
+  :root {
+    /* tighter vertical rhythm so phones aren't full of huge gaps */
+    --section-y: clamp(2.75rem, 1.5rem + 5vh, 4rem);
+  }
+  /* anchored navigation lands below the sticky bar, not under it */
+  section[id] {
+    scroll-margin-top: 4.75rem;
+  }
+}
