@@ -13,7 +13,9 @@ import Section from "../components/Section.astro";
 import About from "../components/About.astro";
 import EducationList from "../components/EducationList.astro";
 import ProjectEntry from "../components/ProjectEntry.astro";
+import RobotArm from "../components/RobotArm.astro";
 import ResearchEntry from "../components/ResearchEntry.astro";
+import NanoSwitch from "../components/NanoSwitch.astro";
 import Publication from "../components/Publication.astro";
 import RoleEntry from "../components/RoleEntry.astro";
 import SiteFooter from "../components/SiteFooter.astro";
@@ -35,6 +37,14 @@ import SiteFooter from "../components/SiteFooter.astro";
     </Section>
 
     <Section id="engineering" eyebrow="02" heading="Engineering" rule>
+      <figure class="section-figure" data-reveal>
+        <RobotArm />
+        <figcaption>
+          <span aria-hidden="true">FIG. 01a</span>
+          Two-link arm, pick-and-place cycle.
+        </figcaption>
+      </figure>
+
       <ProjectEntry
         tag="FIG. 01"
         title="Robotic Arm + ACT Policy"
@@ -52,6 +62,16 @@ import SiteFooter from "../components/SiteFooter.astro";
     </Section>
 
     <Section id="research" eyebrow="03" heading="Research" rule>
+      <figure class="section-figure" data-reveal>
+        <NanoSwitch />
+        <figcaption>
+          <span aria-hidden="true">FIG. 02</span>
+          DNA nanoswitch, simulated as a flexible polymer. A streptavidin
+          analyte binds a biotin, the strand loops to bridge the second, then
+          releases.
+        </figcaption>
+      </figure>
+
       <ResearchEntry
         tag="SPEC-01"
         title="DNA Nanoswitches for Drug Discovery"
@@ -71,6 +91,18 @@ import SiteFooter from "../components/SiteFooter.astro";
           trials.
         </p>
 
+        <p class="research-abstract" data-reveal>
+          <span class="research-abstract__label" aria-hidden="true">Abstract, JEI</span>
+          This paper investigates how spatial constraints influence molecular
+          binding by using DNA nanoswitches, programmable DNA scaffolds that
+          position binding partners at defined distances. By integrating
+          gel-based experiments with a polymer physics model, we quantify how
+          binding-site arrangement affects the probability of loop formation
+          through changes in effective local concentration. The results provide a
+          generalizable approach for predicting and controlling tethered
+          biomolecular interactions in synthetic and biological systems.
+        </p>
+
         <Fragment slot="publications">
           <Publication
             role="First author"
@@ -80,14 +112,6 @@ import SiteFooter from "../components/SiteFooter.astro";
             Tethered Molecular Interactions in DNA Nanoswitches: Modeling and
             Controlling Local Concentration. With Harvard Medical School
             professor Wesley Wong.
-          </Publication>
-          <Publication
-            role="Patient perspective"
-            venue="The Lancet Rheumatology"
-            href="https://www.thelancet.com/journals/lanrhe/article/PIIS2665-9913(24)00203-0/abstract"
-            linkLabel="Read"
-          >
-            A patient perspective published in The Lancet Rheumatology.
           </Publication>
         </Fragment>
       </ResearchEntry>
@@ -103,20 +127,31 @@ import SiteFooter from "../components/SiteFooter.astro";
           location="Cambridge, MA"
         >
           <p>
-            Evaluated spinning DNA-nanoswitch drug-discovery technology out into
-            a company, analyzing platform scalability, IP positioning, and
-            commercialization strategy. Built the financial model, including a
-            risk-adjusted revenue build, DCF, and sensitivity analyses across
-            clinical phases. Authored scientific positioning on nanoswitch-based
-            therapies for Type 1 Diabetes, covering PD-1/PD-L1 agonist
-            mechanisms and the competitive landscape. The work fed into a $15M
+            Northpond is a science-driven venture firm backing companies across
+            life sciences, healthcare, and deep technology. I evaluated the
+            spin-out of DNA-nanoswitch drug-discovery technology into a new
+            company, Merge Bio, analyzing platform scalability, IP positioning,
+            and commercialization strategy. I built the financial model,
+            including a risk-adjusted revenue build, DCF, and sensitivity
+            analyses that integrated market sizing, pricing benchmarks, and
+            probability-of-success adjustments across clinical phases. I authored
+            scientific positioning on nanoswitch-based therapies for Type 1
+            Diabetes, covering PD-1/PD-L1 agonist mechanisms, nanobody
+            properties, and the competitive landscape. The work fed into a $15M
             seed round.
           </p>
         </RoleEntry>
 
-        <RoleEntry tag="ROLE-02" firm="Construct Capital" term="Summer 2025">
+        <RoleEntry
+          tag="ROLE-02"
+          firm="Construct Capital"
+          term="Summer 2025"
+        >
           <p>
-            Built AI agent infrastructure that streamlines the firm's internal
+            Construct is an early-stage venture firm investing in companies that
+            transform the foundational industries of the economy, including
+            manufacturing, logistics, supply chain, transportation, and defense.
+            I built AI agent infrastructure that streamlines the firm's internal
             workflows and the screening of inbound companies, accelerating them
             through the deal pipeline.
           </p>
@@ -153,6 +188,47 @@ import SiteFooter from "../components/SiteFooter.astro";
   .roles {
     display: grid;
     gap: var(--space-6);
+  }
+
+  /* Section figures (the robot arm, the nanoswitch) sit above their entries. */
+  .section-figure {
+    margin: 0 0 var(--space-7);
+    padding: var(--space-6);
+    border: var(--border);
+    border-radius: var(--r-md);
+    background: var(--c-bg-elev);
+  }
+  .section-figure figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    max-width: 60ch;
+    margin-top: var(--space-4);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    line-height: var(--lh-mono);
+    letter-spacing: 0.04em;
+  }
+  .section-figure figcaption span {
+    color: var(--c-accent);
+  }
+
+  .research-abstract {
+    margin-top: var(--space-5);
+    padding-left: var(--space-5);
+    border-left: 2px solid var(--c-accent-dim);
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+  }
+  .research-abstract__label {
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
   }
 </style>
 

@@ -1,0 +1,100 @@
+---
+/**
+ * RobotArm.astro — Engineering section (the robotic-arm project).
+ * A two-link articulated arm that runs a continuous pick-and-place cycle: the
+ * shoulder and elbow joints rotate and the gripper opens/closes. Nested groups
+ * rotate about their joint pivots (transform-box: view-box + transform-origin).
+ * Transforms only (anime.js-safe). SSR renders a posed static arm for
+ * reduced-motion / no-JS.
+ *
+ * Mount id: #robot-arm. Script: ../scripts/robotarm.ts (initRobotArm).
+ */
+const VW = 360;
+const VH = 300;
+---
+
+<div id="robot-arm" class="ra" role="img" aria-label="Stylized two-link robotic arm running a pick-and-place cycle">
+  <svg class="ra-svg" viewBox={`0 0 ${VW} ${VH}`} fill="none" aria-hidden="true">
+    <!-- ground + work surface -->
+    <line class="ra-ground" x1="40" y1="278" x2="320" y2="278"></line>
+    <rect class="ra-target" x="250" y="262" width="30" height="16" rx="2"></rect>
+
+    <!-- base -->
+    <polygon class="ra-base" points="152,278 208,278 198,252 162,252"></polygon>
+
+    <!-- shoulder joint (rotates about 180,254) -->
+    <g class="ra-shoulder" data-shoulder style="transform-origin:180px 254px">
+      <rect class="ra-link" x="172" y="160" width="16" height="96" rx="6"></rect>
+      <circle class="ra-joint" cx="180" cy="254" r="7"></circle>
+
+      <!-- elbow joint (rotates about 180,162) -->
+      <g class="ra-elbow" data-elbow style="transform-origin:180px 162px">
+        <rect class="ra-link" x="174" y="86" width="12" height="80" rx="6"></rect>
+        <circle class="ra-joint" cx="180" cy="162" r="6"></circle>
+
+        <!-- gripper (opens/closes) -->
+        <g class="ra-gripper" data-gripper style="transform-origin:180px 86px">
+          <line class="ra-wrist" x1="180" y1="96" x2="180" y2="84"></line>
+          <line class="ra-prong ra-prong--l" x1="170" y1="84" x2="170" y2="68"></line>
+          <line class="ra-prong ra-prong--r" x1="190" y1="84" x2="190" y2="68"></line>
+          <line class="ra-knuckle" x1="170" y1="84" x2="190" y2="84"></line>
+        </g>
+      </g>
+    </g>
+  </svg>
+</div>
+
+<style>
+  .ra {
+    width: 100%;
+    max-width: 360px;
+    margin-inline: auto;
+    filter: drop-shadow(0 0 24px rgba(230, 57, 70, 0.07));
+  }
+  .ra-svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .ra-ground {
+    stroke: var(--c-hairline-strong);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 6;
+  }
+  .ra-target {
+    fill: var(--c-bg-elev-2);
+    stroke: var(--c-text-muted);
+    stroke-width: 1.5;
+  }
+  .ra-base {
+    fill: var(--c-bg-elev);
+    stroke: var(--c-text-faint);
+    stroke-width: 1.5;
+  }
+  .ra-link {
+    fill: var(--c-bg-elev-2);
+    stroke: var(--c-text-muted);
+    stroke-width: 1.5;
+  }
+  .ra-joint {
+    fill: var(--c-bg);
+    stroke: var(--c-text-faint);
+    stroke-width: 1.5;
+  }
+  .ra-wrist {
+    stroke: var(--c-text-muted);
+    stroke-width: 2;
+  }
+  .ra-prong,
+  .ra-knuckle {
+    stroke: var(--c-accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
+</style>
+
+<script>
+  import { initRobotArm } from "../scripts/robotarm.ts";
+  initRobotArm();
+</script>

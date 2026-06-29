@@ -1,61 +1,241 @@
 /**
- * nanoswitch.ts — the hero "conformational switch" animation.
+ * nanoswitch.ts — DNA nanoswitch as a flexible-polymer physics simulation.
  *
- * HOW IT INITS
- *   NanoSwitch.astro's module <script> calls `initNanoSwitch()`. That sets up an
- *   IntersectionObserver and only builds/plays the anime.js timeline once the
- *   hero is in (or near) the viewport — keeping work off the critical path.
+ * The backbone is a chain of point masses (Verlet integration) with distance
+ * constraints, so it behaves like a flexible polymer: it jiggles in solution
+ * under thermal noise and bends freely. Two biotins ride on two backbone nodes.
+ * Streptavidin analytes drift (each its own little Brownian point). A binding-
+ * cycle state machine runs forever:
  *
- * WHAT IT DOES
- *   1. assemble : nodes + edges stagger into existence (stagger ~--stagger-node).
- *   2. settle   : a brief spring settle into the resolved "open" conformation.
- *   3. morph    : open -> closed/looped on scroll, hover, or click; reverses out.
- *   4. idle     : a very subtle breathing drift on the nodes (non-distracting).
- *   5. boop     : THE one delight — click springs/jiggles the structure.
+ *   WIGGLE  -> open strand jiggling, analytes drifting
+ *   APPROACH-> one analyte homes in on biotin A and binds
+ *   LOOP    -> a binding spring pulls the two biotins together; the slack between
+ *              them buckles into a loop and the analyte bridges both
+ *   RELEASE -> analyte detaches and drifts off; the chain relaxes; next analyte
  *
- * GEOMETRY lives entirely in NanoSwitch.astro as data-attributes
- *   (data-open-x/y, data-closed-x/y on nodes; data-open-d/data-closed-d on edges).
- *   This file is geometry-agnostic.
- *
- * REDUCED MOTION
- *   All animation is gated behind prefers-reduced-motion. When reduced, we do
- *   nothing: the SSR markup already renders the resolved "open" conformation.
- *
- * Verified against animejs 4.5.0 (named exports, JS easings, svg.morphTo).
+ * We draw the backbone `d` and position biotins/analytes ourselves each frame
+ * (own rAF — not anime tweening, so no SVG-attribute pitfalls). Lazy-inits near
+ * the viewport; gated by prefers-reduced-motion (static SSR strand stands).
  */
-
-import {
-  animate,
-  createTimeline,
-  stagger,
-  createSpring,
-  utils,
-} from "animejs";
 
 const REDUCED = "(prefers-reduced-motion: reduce)";
 
+type Pt = { x: number; y: number; px: number; py: number };
+
 export function initNanoSwitch(): void {
   if (typeof window === "undefined") return;
-  if (window.matchMedia(REDUCED).matches) return; // static SSR state stands.
+  if (window.matchMedia(REDUCED).matches) return;
 
-  const root = document.querySelector<SVGElement>("#nanoswitch");
+  const root = document.querySelector<HTMLElement>("#nanoswitch");
   if (!root) return;
+  const strand = root.querySelector<SVGPathElement>("[data-strand]");
+  const biotinEls = Array.from(root.querySelectorAll<SVGGElement>("[data-biotin]"));
+  const analyteEls = Array.from(root.querySelectorAll<SVGGElement>("[data-analyte]"));
+  if (!strand || biotinEls.length < 2 || !analyteEls.length) return;
 
-  let started = false;
-  const start = () => {
-    if (started) return;
-    started = true;
-    run(root);
+  const N = Number(root.dataset.n);
+  const X0 = Number(root.dataset.x0);
+  const X1 = Number(root.dataset.x1);
+  const BASE_Y = Number(root.dataset.baseY);
+  const SITE_A = Number(root.dataset.siteA);
+  const SITE_B = Number(root.dataset.siteB);
+  const REST = (X1 - X0) / (N - 1);
+
+  // ---- backbone nodes ----
+  const home = Array.from({ length: N }, (_, i) => ({
+    x: X0 + ((X1 - X0) * i) / (N - 1),
+    y: BASE_Y,
+  }));
+  const nodes: Pt[] = home.map((h, i) => {
+    const y = BASE_Y + 9 * Math.sin(i * 0.6);
+    return { x: h.x, y, px: h.x, py: y };
+  });
+
+  // ---- analytes (each a small Brownian point around its float home) ----
+  const aHome = analyteEls.map((el) => ({
+    x: Number(el.dataset.fx),
+    y: Number(el.dataset.fy),
+  }));
+  const aPts: Pt[] = aHome.map((h) => ({ x: h.x, y: h.y, px: h.x, py: h.y }));
+  const aOpacity = analyteEls.map(() => 1);
+
+  // ---- state machine ----
+  type Phase = "wiggle" | "approach" | "loop" | "release";
+  let phase: Phase = "wiggle";
+  let t0 = performance.now();
+  let active = 0; // index of the engaging analyte
+  const DUR: Record<Phase, number> = {
+    wiggle: 1500,
+    approach: 950,
+    loop: 2500,
+    release: 1050,
   };
 
-  // Lazy-init: build the timeline only when the hero nears the viewport.
+  const FRICTION = 0.9;
+  const TEMP = 0.45; // thermal noise amplitude
+  const rand = () => (Math.random() * 2 - 1) * TEMP;
+  const mid = () => ({
+    x: (nodes[SITE_A].x + nodes[SITE_B].x) / 2,
+    y: (nodes[SITE_A].y + nodes[SITE_B].y) / 2,
+  });
+
+  function step(now: number) {
+    const elapsed = now - t0;
+    const phaseT = Math.min(1, elapsed / DUR[phase]);
+
+    // binding strength + loop bias ramp during the loop phase
+    const bind = phase === "loop" ? Math.min(1, phaseT * 1.6) : 0;
+
+    // ---- integrate backbone ----
+    for (let i = 0; i < N; i++) {
+      const n = nodes[i];
+      let vx = (n.x - n.px) * FRICTION;
+      let vy = (n.y - n.py) * FRICTION;
+      n.px = n.x;
+      n.py = n.y;
+
+      // thermal jiggle (the strand is always alive in solution)
+      let fx = rand();
+      let fy = rand();
+
+      // weak restoring force toward home line (keeps it framed); endpoints firmer
+      const kHome = i === 0 || i === N - 1 ? 0.012 : 0.005;
+      // relax the middle's restoring force while looping so it can buckle
+      const between = i > SITE_A && i < SITE_B;
+      const kEff = between ? kHome * (1 - 0.85 * bind) : kHome;
+      fx += (home[i].x - n.x) * kEff;
+      fy += (home[i].y - n.y) * kEff;
+
+      // buckle the slack between the sites downward into a loop
+      if (between) fy += 0.7 * bind;
+
+      n.x += vx + fx;
+      n.y += vy + fy;
+    }
+
+    // binding spring: draw the two biotin sites together
+    if (bind > 0) {
+      const a = nodes[SITE_A];
+      const b = nodes[SITE_B];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const k = 0.06 * bind;
+      a.x += dx * k;
+      a.y += dy * k;
+      b.x -= dx * k;
+      b.y -= dy * k;
+    }
+
+    // ---- distance constraints (keep polymer length ~constant) ----
+    for (let it = 0; it < 4; it++) {
+      for (let i = 0; i < N - 1; i++) {
+        const a = nodes[i];
+        const b = nodes[i + 1];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        const d = Math.hypot(dx, dy) || 0.0001;
+        const diff = ((d - REST) / d) * 0.5;
+        dx *= diff;
+        dy *= diff;
+        a.x += dx;
+        a.y += dy;
+        b.x -= dx;
+        b.y -= dy;
+      }
+    }
+
+    // clamp to frame
+    for (const n of nodes) {
+      n.x = Math.max(20, Math.min(440, n.x));
+      n.y = Math.max(16, Math.min(224, n.y));
+    }
+
+    // ---- analytes ----
+    const bridge = mid();
+    for (let i = 0; i < aPts.length; i++) {
+      const p = aPts[i];
+      if (i === active && phase !== "wiggle") {
+        // scripted: home onto biotin A, then ride the bridge, then drift off
+        let tx = aHome[i].x;
+        let ty = aHome[i].y;
+        if (phase === "approach") {
+          tx = nodes[SITE_A].x;
+          ty = nodes[SITE_A].y - 12;
+        } else if (phase === "loop") {
+          tx = bridge.x;
+          ty = bridge.y - 12;
+          aOpacity[i] = 1;
+        } else if (phase === "release") {
+          tx = bridge.x;
+          ty = bridge.y - 60;
+          aOpacity[i] = Math.max(0, 1 - phaseT);
+        }
+        p.x += (tx - p.x) * 0.18;
+        p.y += (ty - p.y) * 0.18;
+        p.px = p.x;
+        p.py = p.y;
+      } else {
+        // free Brownian drift around float home
+        const vx = (p.x - p.px) * FRICTION;
+        const vy = (p.y - p.py) * FRICTION;
+        p.px = p.x;
+        p.py = p.y;
+        p.x += vx + rand() + (aHome[i].x - p.x) * 0.01;
+        p.y += vy + rand() + (aHome[i].y - p.y) * 0.01;
+      }
+    }
+
+    // ---- phase transitions ----
+    if (elapsed >= DUR[phase]) {
+      t0 = now;
+      if (phase === "wiggle") phase = "approach";
+      else if (phase === "approach") phase = "loop";
+      else if (phase === "loop") phase = "release";
+      else {
+        // release done: reset spent analyte, advance to next
+        aOpacity[active] = 1;
+        aPts[active].x = aHome[active].x;
+        aPts[active].y = aHome[active].y;
+        aPts[active].px = aHome[active].x;
+        aPts[active].py = aHome[active].y;
+        active = (active + 1) % aPts.length;
+        phase = "wiggle";
+      }
+    }
+
+    render();
+    raf = requestAnimationFrame(step);
+  }
+
+  function render() {
+    // smooth backbone via quadratic segments through node midpoints
+    let d = `M${nodes[0].x.toFixed(1)},${nodes[0].y.toFixed(1)}`;
+    for (let i = 1; i < N - 1; i++) {
+      const mx = (nodes[i].x + nodes[i + 1].x) / 2;
+      const my = (nodes[i].y + nodes[i + 1].y) / 2;
+      d += ` Q${nodes[i].x.toFixed(1)},${nodes[i].y.toFixed(1)} ${mx.toFixed(1)},${my.toFixed(1)}`;
+    }
+    d += ` L${nodes[N - 1].x.toFixed(1)},${nodes[N - 1].y.toFixed(1)}`;
+    strand!.setAttribute("d", d);
+
+    biotinEls[0].setAttribute("transform", `translate(${nodes[SITE_A].x.toFixed(1)} ${nodes[SITE_A].y.toFixed(1)})`);
+    biotinEls[1].setAttribute("transform", `translate(${nodes[SITE_B].x.toFixed(1)} ${nodes[SITE_B].y.toFixed(1)})`);
+
+    for (let i = 0; i < analyteEls.length; i++) {
+      analyteEls[i].setAttribute("transform", `translate(${aPts[i].x.toFixed(1)} ${aPts[i].y.toFixed(1)})`);
+      analyteEls[i].style.opacity = String(aOpacity[i]);
+    }
+  }
+
+  let raf = 0;
   if ("IntersectionObserver" in window) {
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
           if (e.isIntersecting) {
             io.disconnect();
-            start();
+            t0 = performance.now();
+            raf = requestAnimationFrame(step);
             break;
           }
         }
@@ -64,155 +244,6 @@ export function initNanoSwitch(): void {
     );
     io.observe(root);
   } else {
-    start();
+    raf = requestAnimationFrame(step);
   }
-}
-
-function run(root: SVGElement): void {
-  const nodes = Array.from(
-    root.querySelectorAll<SVGCircleElement>(".ns-node")
-  );
-  const edges = Array.from(root.querySelectorAll<SVGPathElement>(".ns-edge"));
-  if (!nodes.length || !edges.length) return;
-
-  // --- stagger step from the design token (--stagger-node, ms) --------------
-  const staggerMs =
-    parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "--stagger-node"
-      )
-    ) || 45;
-
-  // --- 1+2. ASSEMBLY + SETTLE ----------------------------------------------
-  // Start everything invisible/collapsed, then stagger in with a spring settle.
-  utils.set(nodes, { opacity: 0, scale: 0 });
-  utils.set(edges, { opacity: 0 });
-  // Edges "draw in" via stroke-dash so they form rather than just fade.
-  edges.forEach((e) => {
-    const len = e.getTotalLength();
-    e.style.strokeDasharray = `${len}`;
-    e.style.strokeDashoffset = `${len}`;
-  });
-
-  const assembly = createTimeline({ autoplay: false });
-
-  assembly
-    .add(
-      nodes,
-      {
-        opacity: [0, 1],
-        scale: [0, 1],
-        duration: 620,
-        ease: createSpring({ stiffness: 130, damping: 14, mass: 1 }),
-        delay: stagger(staggerMs, { from: "center" }),
-      },
-      0
-    )
-    .add(
-      edges,
-      {
-        opacity: [0, 1],
-        strokeDashoffset: [
-          (el: SVGPathElement) => el.getTotalLength(),
-          0,
-        ],
-        duration: 760,
-        ease: "out(3)",
-        delay: stagger(staggerMs * 0.8, { start: staggerMs * 2 }),
-      },
-      0
-    );
-
-  // After assembly, clear the dash so morphs render cleanly.
-  assembly.then(() => {
-    edges.forEach((e) => {
-      e.style.strokeDasharray = "";
-      e.style.strokeDashoffset = "";
-    });
-  });
-
-  assembly.play();
-
-  // --- 3. MORPH open <-> closed --------------------------------------------
-  // Coordinated: node cx/cy tween + edge path morph, spring-eased.
-  let conformation: "open" | "closed" = "open";
-  let morphing = false;
-
-  // Edges are straight lines between two nodes. Rather than tween the `d`
-  // attribute (anime.js cannot read the current SVG `d`/`cx` values, which trips
-  // decomposeRawValue), we move the NODES via transforms and recompute each
-  // edge's `d` from its endpoints' live positions every frame. Geometry stays
-  // perfectly attached, no attribute-tweening required.
-  const nodeCenter = (i: number) => {
-    const n = nodes[i];
-    const tx = parseFloat(String(utils.get(n, "translateX"))) || 0;
-    const ty = parseFloat(String(utils.get(n, "translateY"))) || 0;
-    return { x: Number(n.dataset.openX) + tx, y: Number(n.dataset.openY) + ty };
-  };
-  const updateEdges = () => {
-    edges.forEach((e) => {
-      const pair = (e.dataset.edge ?? "").split("-").map(Number);
-      const a = nodeCenter(pair[0]);
-      const b = nodeCenter(pair[1]);
-      e.setAttribute("d", `M${a.x},${a.y} L${b.x},${b.y}`);
-    });
-  };
-
-  const morphTo = (target: "open" | "closed") => {
-    if (target === conformation || morphing) return;
-    morphing = true;
-    conformation = target;
-    const k = target; // "open" | "closed"
-
-    animate(nodes, {
-      translateX: (el: SVGCircleElement) =>
-        Number(el.dataset[`${k}X`]) - Number(el.dataset.openX),
-      translateY: (el: SVGCircleElement) =>
-        Number(el.dataset[`${k}Y`]) - Number(el.dataset.openY),
-      duration: 900,
-      ease: createSpring({ stiffness: 90, damping: 16, mass: 1.1 }),
-      delay: stagger(staggerMs * 0.5, { from: "center" }),
-      onUpdate: updateEdges,
-    }).then(() => {
-      morphing = false;
-      updateEdges();
-    });
-  };
-
-  // Triggers: hover the structure -> closed; leave -> open.
-  root.addEventListener("pointerenter", () => morphTo("closed"));
-  root.addEventListener("pointerleave", () => morphTo("open"));
-
-  // Scroll: when the hero scrolls ~halfway out, settle into the closed/looped
-  // bound state (rAF-batched, passive).
-  let ticking = false;
-  const onScroll = () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      ticking = false;
-      const rect = root.getBoundingClientRect();
-      const progressed = rect.bottom < window.innerHeight * 0.6;
-      morphTo(progressed ? "closed" : "open");
-    });
-  };
-  window.addEventListener("scroll", onScroll, { passive: true });
-
-  // --- 5. BOOP (the one delight) -------------------------------------------
-  root.addEventListener("click", () => boop(nodes, edges));
-}
-
-/** The boop: spring-scale the nodes out and resettle (no other gags). */
-function boop(nodes: SVGCircleElement[], edges: SVGPathElement[]): void {
-  animate(nodes, {
-    scale: [{ to: 1.32 }, { to: 1 }],
-    duration: 700,
-    ease: createSpring({ stiffness: 160, damping: 10, mass: 1 }),
-    delay: stagger(22, { from: "center" }),
-  });
-  animate(edges, {
-    opacity: [{ to: 0.55 }, { to: 1 }],
-    duration: 480,
-    ease: "out(2)",
-  });
 }

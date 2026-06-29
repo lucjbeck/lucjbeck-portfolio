@@ -5,14 +5,14 @@
  * The animation agent owns NanoSwitch internals; we just mount it.
  */
 import Container from "./Container.astro";
-import NanoSwitch from "./NanoSwitch.astro";
+import EngineeringHero from "./EngineeringHero.astro";
 ---
 
 <section id="top" class="hero" aria-labelledby="hero-name">
   <Container class="hero__inner">
     <div class="hero__copy" data-reveal>
       <p class="hero__eyebrow">
-        <span aria-hidden="true">EST.</span> Philadelphia / Boston
+        Based in Philadelphia
         <span class="hero__eyebrow-tag">SPECIMEN 00</span>
       </p>
 
@@ -24,19 +24,19 @@ import NanoSwitch from "./NanoSwitch.astro";
       </p>
 
       <p class="hero__meta">
-        <span class="hero__meta-item">EE + AI, UPenn</span>
+        <span class="hero__meta-item">Engineer</span>
         <span class="hero__meta-sep" aria-hidden="true">/</span>
-        <span class="hero__meta-item">Biophysics research</span>
+        <span class="hero__meta-item">Entrepreneur</span>
         <span class="hero__meta-sep" aria-hidden="true">/</span>
-        <span class="hero__meta-item">Robotics</span>
+        <span class="hero__meta-item">Student</span>
       </p>
     </div>
 
     <div class="hero__figure" data-reveal>
-      <NanoSwitch />
+      <EngineeringHero />
       <p class="hero__caption">
         <span aria-hidden="true">FIG. 00</span>
-        Nanoswitch, open conformation. Hover, click, or scroll to toggle.
+        Automated line. Systems that build, move, and learn.
       </p>
     </div>
   </Container>

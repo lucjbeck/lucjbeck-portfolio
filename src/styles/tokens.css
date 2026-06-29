@@ -23,15 +23,14 @@
   --c-text-faint:    #6E7682;   /* mono annotations, labels (AA ~4.6:1, large/labels) */
 
   /* ---- THE ONE ACCENT ----------------------------------------------------
-     "Specimen cyan": luminous blue-green = fluorescence / oscilloscope readout.
-     Deliberately NOT the banned acid-green or vermilion, and not coral-red
-     (animejs) or hot-pink-red (wodniack). Reads "scientific instrument".
-     #34D6C9 on --c-bg ≈ 11:1 contrast (AA/AAA). As a fill with --c-bg text ≈ 10:1.
-     ALTERNATE (documented, swap these 3 vars to switch): amber #F2B450. */
-  --c-accent:        #34D6C9;
-  --c-accent-hover:  #5FE3D8;
-  --c-accent-dim:    rgba(52, 214, 201, 0.14);  /* tints, focus rings, glows */
-  --c-accent-ink:    #04201E;   /* text/icon color when placed ON the accent */
+     "Specimen red": a deep blood red instrument signal. Echoes the reference
+     sites (animejs coral #FF4B4B, wodniack #F40C3F) but pitched darker/richer.
+     #E63946 on --c-bg ≈ 4.7:1 contrast (AA for text incl. small mono labels;
+     AAA at large sizes). Hover brightens for clear affordance. */
+  --c-accent:        #E63946;
+  --c-accent-hover:  #FF5964;
+  --c-accent-dim:    rgba(230, 57, 70, 0.16);  /* tints, focus rings, glows */
+  --c-accent-ink:    #2A0808;   /* text/icon color when placed ON the accent */
 
   --c-focus:         var(--c-accent);
 
@@ -99,7 +98,7 @@
   --border-strong: 1px solid var(--c-hairline-strong);
   --shadow-1: 0 1px 2px rgba(0,0,0,0.4);
   --shadow-2: 0 8px 30px rgba(0,0,0,0.45);
-  --glow-accent: 0 0 24px rgba(52, 214, 201, 0.22);  /* used sparingly on hero/accent */
+  --glow-accent: 0 0 24px rgba(230, 57, 70, 0.22);  /* used sparingly on hero/accent */
 
   /* ---- MOTION (anime.js + CSS; restrained, "function is the flex") ------- */
   --dur-fast: 160ms;

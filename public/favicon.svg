@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Luc Beck">
-  <!-- Placeholder favicon: two nanoswitch nodes + edge on the off-black base. -->
+  <!-- Nanoswitch mark: two biotin nodes + binding edge, blood-red accent. -->
   <rect width="32" height="32" rx="6" fill="#0A0B0D"/>
-  <line x1="10" y1="11" x2="22" y2="21" stroke="#34D6C9" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="10" cy="11" r="3.5" fill="#34D6C9"/>
+  <line x1="10" y1="11" x2="22" y2="21" stroke="#E63946" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="10" cy="11" r="3.5" fill="#E63946"/>
   <circle cx="22" cy="21" r="3.5" fill="#ECEFF3"/>
 </svg>

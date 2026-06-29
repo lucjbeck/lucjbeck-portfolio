@@ -1,145 +1,156 @@
 ---
 /**
- * ============================================================================
- *  NanoSwitch.astro  —  HERO ANIMATION  (the conformational switch)
- *  Owned by the signature-animation agent.
- * ============================================================================
+ * NanoSwitch.astro — physics-simulated DNA nanoswitch (Research section).
+ * The backbone is a flexible polymer: a chain of point masses with distance
+ * constraints, jiggling in solution under thermal noise (Verlet integration in
+ * ../scripts/nanoswitch.ts). It carries two biotins. Streptavidin analytes drift
+ * in solution; each cycle one binds a biotin, a binding spring folds the whole
+ * strand into a loop so the analyte bridges the second biotin, then it releases
+ * and the chain relaxes. Autonomous, continuous.
  *
- *  A stylized DNA nanoswitch rendered as a node-and-edge structure with two
- *  conformations:
- *    - "open"   : an extended, splayed double-strand (the resolved SSR state).
- *    - "closed" : the strand ends bind and the structure loops shut.
+ * The script draws the backbone `d` and positions biotins/analytes itself every
+ * frame (own rAF, not anime tweening). SSR renders a static relaxed strand so
+ * reduced-motion / no-JS users get a correct figure.
  *
- *  MOUNT CONTRACT (kept from FOUNDATION-NOTES):
- *    1. Mount id ........ #nanoswitch
- *    2. SVG structure ... inline <svg> inside #nanoswitch with
- *         nodes:  <circle class="ns-node" data-node="N">
- *         edges:  <path   class="ns-edge" data-edge="A-B">
- *       Edges are <path> (not <line>) so anime.js svg.morphTo can morph them.
- *    3. Script entry .... the module <script> at the bottom imports
- *         ../scripts/nanoswitch.ts which builds the assembly->settle->morph
- *         timeline and lazy-inits when the hero nears the viewport.
- *    4. Reduced motion .. the markup below IS the final resolved "open"
- *         conformation. It is complete and legible with zero JS, so
- *         prefers-reduced-motion / no-JS users see a correct static figure.
- *    5. Sizing .......... viewBox + width:100%; no fixed pixel height.
- *
- *  CONFORMATION DATA
- *    Every node carries data-open-x/y (== its rendered cx/cy) and
- *    data-closed-x/y. Every edge carries data-open-d (== its rendered d) and
- *    data-closed-d. The script reads these so all geometry lives here, in the
- *    component, and JS stays geometry-agnostic.
- * ============================================================================
+ * Mount id: #nanoswitch. Geometry constants below are mirrored in the script.
  */
+const VW = 460;
+const VH = 240;
+const N = 20; // backbone nodes
+const X0 = 58;
+const X1 = 402;
+const BASE_Y = 122;
+const SITE_A = 6; // biotin node indices
+const SITE_B = 13;
 
-// --- Geometry (single source of truth; mirrored into the markup below) -----
-// viewBox 0 0 440 320. Two parallel strands (A: nodes 0-4, B: nodes 5-8) that
-// splay open, then bind end-to-end into a closed loop.
-const VW = 440;
-const VH = 320;
+const nodes = Array.from({ length: N }, (_, i) => {
+  const x = X0 + ((X1 - X0) * i) / (N - 1);
+  const y = BASE_Y + 9 * Math.sin(i * 0.6);
+  return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+});
+const ssrPath = "M" + nodes.map((p) => `${p.x},${p.y}`).join(" L");
 
-type Pt = { x: number; y: number };
-
-// OPEN: extended double strand, gently splayed (relaxed / "unbound").
-const open: Pt[] = [
-  { x: 60,  y: 96  }, // 0  strand A start
-  { x: 138, y: 74  }, // 1
-  { x: 220, y: 70  }, // 2  (apex / focal)
-  { x: 302, y: 78  }, // 3
-  { x: 384, y: 104 }, // 4  strand A end
-  { x: 96,  y: 196 }, // 5  strand B start
-  { x: 180, y: 224 }, // 6
-  { x: 264, y: 226 }, // 7
-  { x: 348, y: 204 }, // 8  strand B end
+const analytes = [
+  { x: 84, y: 54 },
+  { x: 384, y: 64 },
+  { x: 126, y: 36 },
+  { x: 360, y: 156 },
 ];
-
-// CLOSED: the ends bind; the two strands draw together into a looped ring.
-const closed: Pt[] = [
-  { x: 150, y: 80  }, // 0
-  { x: 214, y: 60  }, // 1
-  { x: 290, y: 88  }, // 2
-  { x: 318, y: 158 }, // 3
-  { x: 286, y: 226 }, // 4
-  { x: 132, y: 138 }, // 5
-  { x: 154, y: 214 }, // 6
-  { x: 214, y: 252 }, // 7
-  { x: 282, y: 232 }, // 8
-];
-
-// Edges: backbone of each strand + cross-links ("base pairs") + the closing
-// bonds that only read as "bonds" once looped.
-const edgeList: Array<[number, number]> = [
-  [0, 1], [1, 2], [2, 3], [3, 4],          // strand A backbone
-  [5, 6], [6, 7], [7, 8],                   // strand B backbone
-  [1, 5], [2, 6], [3, 7],                   // cross-links (base pairs)
-  [4, 8],                                   // closing bond (ends bind)
-  [0, 5],                                   // anchoring bond
-];
-
-const path = (a: Pt, b: Pt) => `M${a.x},${a.y} L${b.x},${b.y}`;
-const nodeR = (i: number) => (i === 2 ? 13 : i === 7 ? 11 : i === 0 || i === 8 ? 9 : 8);
 ---
 
-<div id="nanoswitch" class="nanoswitch" role="img" aria-label="Stylized DNA nanoswitch: a node-and-edge structure in its open conformation">
+<div
+  id="nanoswitch"
+  class="nanoswitch"
+  data-n={N}
+  data-x0={X0}
+  data-x1={X1}
+  data-base-y={BASE_Y}
+  data-site-a={SITE_A}
+  data-site-b={SITE_B}
+  role="img"
+  aria-label="DNA nanoswitch simulated as a flexible polymer: a jiggling strand with two biotins and streptavidin analytes in solution; an analyte binds a biotin, the strand folds into a loop to bridge the second, then releases"
+>
   <svg class="ns-svg" viewBox={`0 0 ${VW} ${VH}`} fill="none" aria-hidden="true">
-    <!-- edges (paths so they can morph open<->closed) -->
-    {edgeList.map(([a, b]) => (
-      <path
-        class="ns-edge"
-        data-edge={`${a}-${b}`}
-        data-open-d={path(open[a], open[b])}
-        data-closed-d={path(closed[a], closed[b])}
-        d={path(open[a], open[b])}
-      />
-    ))}
-    <!-- nodes -->
-    {open.map((p, i) => (
-      <circle
-        class:list={["ns-node", { "ns-node--focal": i === 2 }]}
-        data-node={i}
-        data-open-x={p.x}
-        data-open-y={p.y}
-        data-closed-x={closed[i].x}
-        data-closed-y={closed[i].y}
-        cx={p.x}
-        cy={p.y}
-        r={nodeR(i)}
-      />
-    ))}
+    <!-- flexible backbone (the polymer); d is rewritten each frame -->
+    <path class="ns-strand" data-strand d={ssrPath}></path>
+
+    <!-- biotins, positioned at their backbone nodes each frame -->
+    <g class="ns-biotin" data-biotin transform={`translate(${nodes[SITE_A].x} ${nodes[SITE_A].y})`}>
+      <polygon points="0,-8 8,0 0,8 -8,0"></polygon>
+    </g>
+    <g class="ns-biotin" data-biotin transform={`translate(${nodes[SITE_B].x} ${nodes[SITE_B].y})`}>
+      <polygon points="0,-8 8,0 0,8 -8,0"></polygon>
+    </g>
+
+    <!-- streptavidin analytes (the accent X); one engages per cycle -->
+    {
+      analytes.map((a) => (
+        <g class="ns-analyte" data-analyte data-fx={a.x} data-fy={a.y} transform={`translate(${a.x} ${a.y})`}>
+          <line class="ns-x" x1="-8" y1="-8" x2="8" y2="8" />
+          <line class="ns-x" x1="8" y1="-8" x2="-8" y2="8" />
+        </g>
+      ))
+    }
   </svg>
+
+  <ul class="ns-legend" aria-hidden="true">
+    <li><span class="ns-key ns-key--biotin"></span>Biotin</li>
+    <li><span class="ns-key ns-key--strept"></span>Streptavidin</li>
+    <li><span class="ns-key ns-key--strand"></span>DNA backbone</li>
+  </ul>
 </div>
 
 <style>
   .nanoswitch {
     width: 100%;
-    max-width: 600px;
+    max-width: 560px;
     margin-inline: auto;
-    /* a faint instrument glow behind the structure */
-    filter: drop-shadow(0 0 28px rgba(52, 214, 201, 0.10));
+    filter: drop-shadow(0 0 26px rgba(230, 57, 70, 0.08));
   }
   .ns-svg {
     width: 100%;
     height: auto;
     overflow: visible;
-    cursor: pointer;
   }
-  .ns-edge {
-    stroke: var(--c-hairline-strong);
-    stroke-width: 1.5;
+
+  .ns-strand {
+    stroke: var(--c-text-faint);
+    stroke-width: 4;
     stroke-linecap: round;
+    stroke-linejoin: round;
   }
-  .ns-node {
+
+  .ns-biotin polygon {
     fill: var(--c-bg-elev-2);
-    stroke: var(--c-accent);
+    stroke: var(--c-text-muted);
     stroke-width: 1.5;
-    /* transform-box/origin so JS scale boops pivot on the node center */
+  }
+
+  .ns-analyte {
     transform-box: fill-box;
     transform-origin: center;
   }
-  /* single focal point carries the accent fill (one accent, spent on the verb) */
-  .ns-node--focal {
-    fill: var(--c-accent);
+  .ns-x {
     stroke: var(--c-accent);
+    stroke-width: 4.5;
+    stroke-linecap: round;
+  }
+
+  .ns-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-5);
+    margin: var(--space-5) 0 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--c-text-faint);
+  }
+  .ns-legend li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .ns-key {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+  }
+  .ns-key--biotin {
+    background: var(--c-bg-elev-2);
+    border: 1.5px solid var(--c-text-muted);
+    transform: rotate(45deg);
+  }
+  .ns-key--strept {
+    background: var(--c-accent);
+  }
+  .ns-key--strand {
+    border-top: 4px solid var(--c-text-faint);
+    height: 0;
+    align-self: center;
   }
 </style>
 
