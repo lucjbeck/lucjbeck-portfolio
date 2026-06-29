@@ -1,8 +1,7 @@
 ---
 /**
  * SiteFooter — contact datasheet. A hairline grid of contact cells (email,
- * GitHub, LinkedIn) plus one characterful sign-off line in the instrument voice.
- * GitHub / LinkedIn are placeholders, flagged in markup and the report.
+ * LinkedIn) plus one characterful sign-off line in the instrument voice.
  */
 import Container from "./Container.astro";
 
@@ -15,15 +14,9 @@ const contacts = [
     href: "mailto:lucjbeck@gmail.com",
   },
   {
-    /* PLACEHOLDER: GitHub profile URL. */
-    label: "GitHub",
-    value: "[PLACEHOLDER]",
-    href: null,
-  },
-  {
     label: "LinkedIn",
-    value: "in/lucbeck",
-    href: "https://www.linkedin.com/in/lucbeck",
+    value: "in/luc-beck",
+    href: "https://www.linkedin.com/in/luc-beck",
   },
 ];
 ---
@@ -60,8 +53,6 @@ const contacts = [
       </p>
       <p class="footer__legal">
         <span aria-hidden="true">&copy; {year} Luc Beck</span>
-        <span class="footer__sep" aria-hidden="true">/</span>
-        <span>Philadelphia</span>
       </p>
     </div>
   </Container>
@@ -90,7 +81,7 @@ const contacts = [
 
   .footer__grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     margin: 0 0 var(--space-8);
     border: var(--border);
     border-radius: var(--r-md);
