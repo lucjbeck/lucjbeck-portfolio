@@ -13,7 +13,7 @@ import Section from "../components/Section.astro";
 import About from "../components/About.astro";
 import EducationList from "../components/EducationList.astro";
 import ProjectEntry from "../components/ProjectEntry.astro";
-import RobotArm from "../components/RobotArm.astro";
+import HanoiArm from "../components/HanoiArm.astro";
 import ResearchEntry from "../components/ResearchEntry.astro";
 import NanoSwitch from "../components/NanoSwitch.astro";
 import Publication from "../components/Publication.astro";
@@ -37,28 +37,32 @@ import SiteFooter from "../components/SiteFooter.astro";
     </Section>
 
     <Section id="engineering" eyebrow="03" heading="Engineering" rule>
-      <figure class="section-figure" data-reveal>
-        <RobotArm />
-        <figcaption>
-          <span aria-hidden="true">FIG. 01a</span>
-          Two-link arm, pick-and-place cycle.
-        </figcaption>
-      </figure>
+      <div class="split">
+        <div class="split__text" data-reveal>
+          <ProjectEntry
+            tag="FIG. 01"
+            title="Robotic Arm + ACT Policy"
+            specs={[
+              { label: "Capability", value: "[PLACEHOLDER]", placeholder: true },
+              { label: "Demo", value: "[PLACEHOLDER]", placeholder: true },
+              { label: "Code", value: "[PLACEHOLDER]", placeholder: true },
+            ]}
+          >
+            <p>
+              Built a robotic arm and trained an action-chunking-with-transformers
+              (ACT) policy on it using Hugging Face / LeRobot.
+            </p>
+          </ProjectEntry>
+        </div>
 
-      <ProjectEntry
-        tag="FIG. 01"
-        title="Robotic Arm + ACT Policy"
-        specs={[
-          { label: "Capability", value: "[PLACEHOLDER]", placeholder: true },
-          { label: "Demo", value: "[PLACEHOLDER]", placeholder: true },
-          { label: "Code", value: "[PLACEHOLDER]", placeholder: true },
-        ]}
-      >
-        <p>
-          Built a robotic arm and trained an action-chunking-with-transformers
-          (ACT) policy on it using Hugging Face / LeRobot.
-        </p>
-      </ProjectEntry>
+        <figure class="split__stage" data-reveal>
+          <HanoiArm />
+          <figcaption class="split__cap">
+            <span aria-hidden="true">FIG. 01a</span>
+            Tower of Hanoi, 3 disks, recursive solution.
+          </figcaption>
+        </figure>
+      </div>
     </Section>
 
     <Section id="research" eyebrow="04" heading="Research" rule>
@@ -216,6 +220,32 @@ import SiteFooter from "../components/SiteFooter.astro";
   }
   .section-figure figcaption span {
     color: var(--c-accent);
+  }
+
+  /* Generic text-left / animation-right split (Engineering). */
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.55fr);
+    gap: clamp(var(--space-6), 4vw, var(--space-8));
+    align-items: start;
+  }
+  .split__stage { margin: 0; }
+  .split__text { min-width: 0; }
+  .split__cap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    line-height: var(--lh-mono);
+    letter-spacing: 0.04em;
+  }
+  .split__cap span { color: var(--c-accent); }
+  @media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; }
+    .split__stage { order: 2; }
   }
 
   /* Nanoswitch figure side-by-side with the research text. */
