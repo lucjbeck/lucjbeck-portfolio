@@ -13,5 +13,9 @@
   "dependencies": {
     "animejs": "^4.5.0",
     "astro": "^7.0.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "playwright": "^1.61.1"
   }
 }

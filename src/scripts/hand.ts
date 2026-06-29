@@ -10,8 +10,10 @@ const REDUCED = "(prefers-reduced-motion: reduce)";
 const SVGNS   = "http://www.w3.org/2000/svg";
 
 // Geometry — must match HandAnimation.astro
-const LEFT_CX  = 20 + 360 / 2;         // 200 — teleop panel centre x
-const RIGHT_CX = 460 + 360 / 2;        // 640 — robot panel centre x
+// Left panel  (width 340): x=20..360,  centre x=190
+// Right panel (width 340): x=440..780, centre x=610
+const LEFT_CX  = 20 + 340 / 2;         // 190 — teleop panel centre x
+const RIGHT_CX = 440 + 340 / 2;        // 610 — robot panel centre x
 const STREAM_Y = 140;                   // y of the training-signal stream arc
 const GRAPH_Y  = 316;
 const GRAPH_H  = 520 - GRAPH_Y - 20;   // 184
@@ -21,28 +23,29 @@ const GRAPH_W  = 760;
 const CHAN_H   = Math.floor((GRAPH_H - LEGEND_H) / 4); // 39
 
 // Robot arm constants (shoulder joint SVG position, link lengths, elbow side)
-const ARM_BASE_X = 640;
-const ARM_BASE_Y = 258;  // shoulder joint SVG y — top of turret
+const ARM_BASE_X = 610;
+const ARM_BASE_Y = 256;  // shoulder joint SVG y — top of turret
 const ARM_L1     = 80;
 const ARM_L2     = 70;
 const ARM_SIDE   = 1;    // +1 = elbow bends left when arm reaches up
 
 // Waypoints for the robot arm end-effector (absolute SVG coords)
 const ARM_WAYPOINTS = [
-  { x: 640, y: 143 },  // centre-up
-  { x: 702, y: 162 },  // upper-right
-  { x: 640, y: 150 },  // centre slightly lower
-  { x: 578, y: 162 },  // upper-left
+  { x: 610, y: 143 },  // centre-up
+  { x: 668, y: 162 },  // upper-right
+  { x: 610, y: 150 },  // centre slightly lower
+  { x: 552, y: 162 },  // upper-left
 ];
 const ARM_STEP_MS = 2200;
 
-// Finger pivot positions (MCP joints), relative to hand group origin
+// Finger pivot positions (MCP joints), relative to hand group origin.
+// Must match HandAnimation.astro: forearm goes DOWN (positive y), fingers UP (negative y).
 const FINGER_DEFS = [
-  { mx: -28, my: -6  },  // thumb
-  { mx: -18, my: -20 },  // index
-  { mx:  -6, my: -20 },  // middle
-  { mx:   8, my: -20 },  // ring
-  { mx:  22, my: -16 },  // pinky
+  { mx: -26, my: -8  },  // thumb  (CMC joint at palm lower-left)
+  { mx: -16, my: -28 },  // index  (MCP knuckle at palm top)
+  { mx:  -4, my: -28 },  // middle
+  { mx:   9, my: -28 },  // ring
+  { mx:  22, my: -24 },  // pinky  (slightly lower MCP)
 ];
 
 // Gesture keyframes: [index, middle, ring+pinky, thumb] 0–1
@@ -319,7 +322,7 @@ export function initHand(): void {
         continue;
       }
       const t = easeInOut(dot.progress);
-      const x = lerp(LEFT_CX + 180, RIGHT_CX - 180, t);
+      const x = lerp(LEFT_CX + 165, RIGHT_CX - 165, t);
       const y = STREAM_Y - Math.sin(dot.progress * Math.PI) * 12;
       dot.el.setAttribute("cx", x.toFixed(1));
       dot.el.setAttribute("cy", y.toFixed(1));

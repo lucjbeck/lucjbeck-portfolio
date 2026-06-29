@@ -14,19 +14,21 @@
 const REDUCED = "(prefers-reduced-motion: reduce)";
 const SVGNS   = "http://www.w3.org/2000/svg";
 
-// Longer arms from further-out bases. Total reach = 305px.
-// Needed to cover from base (90,300) to far shield corner (260,96): ~221px (2-link component).
-const L1 = 120, L2 = 115, L3 = 70;
+// Longer arms from further-out bases. 2-link reach = 245px, +L3 wrist = 315px.
+// Extra margin on the 2-link sum keeps the elbow away from the full-stretch
+// singularity (the source of the elbow "flip"/teleport) at the farthest cells.
+const L1 = 125, L2 = 120, L3 = 70;
 
 const BASE = [
   { bx: 90,  by: 300 },   // left arm — clear of shield left edge (x=180)
   { bx: 510, by: 300 },   // right arm — clear of shield right edge (x=420)
 ] as const;
 
-// After finishing, arms fold back to park position beside their bases
+// After finishing, arms fold back to a park pose up-and-out beside their bases.
+// Kept well clear of the base (dist > L3) so the wrist link never degenerates.
 const PARK_EE = [
-  { x: 34,  y: 300 },
-  { x: 566, y: 300 },
+  { x: 60,  y: 168 },
+  { x: 540, y: 168 },
 ] as const;
 
 const GRID = [
@@ -143,16 +145,18 @@ export function initAboutAssembly(): void {
     }
   });
 
-  // PENN letters at row 9 (one row below shield) on the center columns
+  // PENN letters: packed close together, CENTERED under the crest (shield
+  // centre x = 300). Four blocks spaced by CELL, symmetric about x=300.
+  const PENN_CY = rowY(10);   // y = 496 — two rows below shield bottom
   const LETTERS = [
-    { ch: "P", tx: colX(1) },  // x=220
-    { ch: "E", tx: colX(2) },  // x=260
-    { ch: "N", tx: colX(4) },  // x=340
-    { ch: "N", tx: colX(5) },  // x=380
+    { ch: "P", tx: 240 },
+    { ch: "E", tx: 280 },
+    { ch: "N", tx: 320 },
+    { ch: "N", tx: 360 },
   ];
   const letterPieces: Piece[] = LETTERS.map(lt => ({
     el: createLetterBlock(lt.ch, layer),
-    tx: lt.tx, ty: rowY(9),    // y = 456
+    tx: lt.tx, ty: PENN_CY,
   }));
   const allPieces = [...pieces, ...letterPieces];
 
@@ -183,7 +187,10 @@ export function initAboutAssembly(): void {
     // Left-arm plate: x=baseCx-29..baseCx+29, y=baseCy-28..baseCy+12
     const px0 = baseCx - 29, px1 = baseCx + 29;
     const py0 = baseCy - 28, py1 = baseCy + 12;
-    const MIN_DIST = 55;                 // min distance from pivot centre
+    // Keep every scatter slot well outside the wrist-link length (L3=70) from the
+    // pivot. Targets closer than ~L3 make the "third link points at target" math
+    // overshoot the base and the wrist spins — the teleport the arms showed.
+    const MIN_DIST = 95;
 
     const pos: { x: number; y: number }[] = [];
     for (const x of cols) {
@@ -207,9 +214,20 @@ export function initAboutAssembly(): void {
   const leftSlots  = makeSidePositions(LEFT_COLS,  BASE[0].bx, BASE[0].by);
   const rightSlots = makeSidePositions(RIGHT_COLS, BASE[1].bx, BASE[1].by);
 
+  // Add per-piece position jitter so scatter looks like a pile, not a perfect grid
+  const jitter = mulberry32(59265);
+  const jx = () => Math.round((jitter() - 0.5) * 16);  // ±8 px horizontal
+  const jy = () => Math.round((jitter() - 0.5) * 16);  // ±8 px vertical
+
   const startPos = new Map<Piece, { x: number; y: number }>();
-  queues[0].forEach((p, i) => startPos.set(p, leftSlots[i % leftSlots.length]));
-  queues[1].forEach((p, i) => startPos.set(p, rightSlots[i % rightSlots.length]));
+  queues[0].forEach((p, i) => {
+    const s = leftSlots[i % leftSlots.length];
+    startPos.set(p, { x: s.x + jx(), y: s.y + jy() });
+  });
+  queues[1].forEach((p, i) => {
+    const s = rightSlots[i % rightSlots.length];
+    startPos.set(p, { x: s.x + jx(), y: s.y + jy() });
+  });
 
   // Place pieces at their scatter positions
   for (const p of allPieces) {

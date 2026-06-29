@@ -25,3 +25,6 @@ pnpm-debug.log*
 # local build-agent skills and the private build brief (not part of the site)
 .claude/
 .agents/
+
+# Playwright screenshot output
+.screenshots/
