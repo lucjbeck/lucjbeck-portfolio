@@ -40,7 +40,7 @@ import SiteFooter from "../components/SiteFooter.astro";
       <div class="split">
         <div class="split__text" data-reveal>
           <ProjectEntry
-            tag="FIG. 02"
+            tag="PROJ-01"
             title="Robotic Arm + ACT Policy"
             specs={[
               { label: "Demo", value: "x.com/lucjbeck", href: "https://x.com/lucjbeck" },
@@ -95,27 +95,16 @@ import SiteFooter from "../components/SiteFooter.astro";
           trials.
         </p>
 
-        <p class="research-abstract" data-reveal>
-          <span class="research-abstract__label" aria-hidden="true">Abstract, JEI</span>
-          This paper investigates how spatial constraints influence molecular
-          binding by using DNA nanoswitches, programmable DNA scaffolds that
-          position binding partners at defined distances. By integrating
-          gel-based experiments with a polymer physics model, we quantify how
-          binding-site arrangement affects the probability of loop formation
-          through changes in effective local concentration. The results provide a
-          generalizable approach for predicting and controlling tethered
-          biomolecular interactions in synthetic and biological systems.
-        </p>
-
         <Fragment slot="publications">
           <Publication
             role="First author"
             venue="Journal of Emerging Investigators"
-            placeholder={true}
+            status="Accepted — Awaiting Publication"
+            abstract="This paper investigates how spatial constraints influence molecular binding by using DNA nanoswitches, programmable DNA scaffolds that position binding partners at defined distances. By integrating gel-based experiments with a polymer physics model, we quantify how binding-site arrangement affects the probability of loop formation through changes in effective local concentration. The results provide a generalizable approach for predicting and controlling tethered biomolecular interactions in synthetic and biological systems."
           >
             Tethered Molecular Interactions in DNA Nanoswitches: Modeling and
-            Controlling Local Concentration. With Harvard Medical School
-            professor Wesley Wong.
+            Controlling Local Concentration. With Wesley Wong (Harvard Medical
+            School) and postdoctoral researcher Andy Ward.
           </Publication>
         </Fragment>
       </ResearchEntry>
@@ -133,33 +122,28 @@ import SiteFooter from "../components/SiteFooter.astro";
           location="Cambridge, MA"
         >
           <p>
-            Northpond is a science-driven venture firm backing companies across
-            life sciences, healthcare, and deep technology. I evaluated the
-            spin-out of DNA-nanoswitch drug-discovery technology into a new
-            company, Merge Bio, analyzing platform scalability, IP positioning,
-            and commercialization strategy. I built the financial model,
-            including a risk-adjusted revenue build, DCF, and sensitivity
-            analyses that integrated market sizing, pricing benchmarks, and
-            probability-of-success adjustments across clinical phases. I authored
-            scientific positioning on nanoswitch-based therapies for Type 1
-            Diabetes, covering PD-1/PD-L1 agonist mechanisms, nanobody
-            properties, and the competitive landscape. The work fed into a $15M
-            seed round.
+            I evaluated spinning DNA-nanoswitch drug-discovery technology out
+            into a new company, Merge Bio, assessing platform scalability, IP
+            positioning, and commercialization strategy. I built the financial
+            model end to end, a risk-adjusted revenue build, DCF, and sensitivity
+            analyses spanning market sizing, pricing benchmarks, and
+            probability-of-success adjustments across clinical phases. I also
+            authored the scientific positioning on nanoswitch-based therapies for
+            Type 1 Diabetes, covering PD-1/PD-L1 agonist mechanisms and the
+            competitive landscape. The work fed into a $15M seed round.
           </p>
         </RoleEntry>
 
         <RoleEntry
           tag="ROLE-02"
           firm="Construct Capital"
+          role="Summer Analyst"
           term="Summer 2025"
         >
           <p>
-            Construct is an early-stage venture firm investing in companies that
-            transform the foundational industries of the economy, including
-            manufacturing, logistics, supply chain, transportation, and defense.
-            I built AI agent infrastructure that streamlines the firm's internal
-            workflows and the screening of inbound companies, accelerating them
-            through the deal pipeline.
+            I'm building AI agent infrastructure that streamlines the firm's
+            internal workflows and the screening of inbound companies,
+            accelerating deals through the pipeline.
           </p>
         </RoleEntry>
       </div>
@@ -264,22 +248,6 @@ import SiteFooter from "../components/SiteFooter.astro";
     .research-split__fig { position: static; }
   }
 
-  .research-abstract {
-    margin-top: var(--space-5);
-    padding-left: var(--space-5);
-    border-left: 2px solid var(--c-accent-dim);
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
-  }
-  .research-abstract__label {
-    display: block;
-    margin-bottom: var(--space-2);
-    color: var(--c-text-faint);
-    font-family: var(--font-mono);
-    font-size: var(--fs-micro);
-    letter-spacing: var(--ls-label);
-    text-transform: uppercase;
-  }
 </style>
 
 <script>

@@ -5,26 +5,29 @@
  * Props:
  *   role: string                 // e.g. "First author", "Patient perspective"
  *   venue: string                // journal / venue name
- *   href?: string                // article URL (omit for placeholder)
- *   placeholder?: boolean        // mark the missing-link case
+ *   status?: string              // e.g. "ACCEPTED — AWAITING PUBLICATION"
+ *   href?: string                // article URL (omit when not yet available)
  *   linkLabel?: string           // text for the link (default "Read")
+ *   abstract?: string            // optional abstract block below the title
  *
  * Slots: default — the citation / title text.
  */
 interface Props {
   role: string;
   venue: string;
+  status?: string;
   href?: string;
-  placeholder?: boolean;
   linkLabel?: string;
+  abstract?: string;
 }
 
 const {
   role,
   venue,
+  status,
   href,
-  placeholder = false,
   linkLabel = "Read",
+  abstract,
 } = Astro.props;
 ---
 
@@ -33,15 +36,20 @@ const {
     <span class="pub__role">{role}</span>
     <span class="pub__venue">{venue}</span>
   </p>
+  {status && <p class="pub__status">{status}</p>}
   <p class="pub__title"><slot /></p>
+  {abstract && (
+    <div class="pub__abstract">
+      <span class="pub__abstract-label" aria-hidden="true">Abstract</span>
+      {abstract}
+    </div>
+  )}
   {
     href ? (
       <a class="pub__link" href={href} target="_blank" rel="noopener noreferrer">
         {linkLabel}
         <span aria-hidden="true"> ↗</span>
       </a>
-    ) : placeholder ? (
-      <span class="pub__link pub__link--ph">[PLACEHOLDER: link]</span>
     ) : null
   }
 </article>
@@ -78,11 +86,35 @@ const {
     margin-bottom: var(--space-2);
   }
 
+  .pub__status {
+    margin-bottom: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--c-accent);
+  }
+
+  .pub__abstract {
+    margin-top: var(--space-4);
+    padding-left: var(--space-5);
+    border-left: 2px solid var(--c-accent-dim);
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-body);
+  }
+  .pub__abstract-label {
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--c-text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+
   .pub__link {
     font-family: var(--font-mono);
     font-size: var(--fs-sm);
-  }
-  .pub__link--ph {
-    color: var(--c-text-faint);
   }
 </style>

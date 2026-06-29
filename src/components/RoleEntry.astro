@@ -1,12 +1,14 @@
 ---
 /**
- * RoleEntry — a catalogued professional role. Hairline cell with a mono catalog
- * tag, the firm, a role/term/location metadata line, and the blurb.
+ * RoleEntry — catalogued professional role with a left metadata rail.
+ *
+ * Layout: narrow left rail (ROLE-0x tag + dates + location) | right main column
+ * (firm name + optional role title + body). On mobile the rail stacks above.
  *
  * Props:
  *   tag: string         // e.g. "ROLE-01"
  *   firm: string
- *   role: string        // title
+ *   role?: string       // job title
  *   term: string        // e.g. "Summers 2024 and 2025"
  *   location?: string
  *
@@ -17,7 +19,7 @@ import CatalogNumber from "./CatalogNumber.astro";
 interface Props {
   tag: string;
   firm: string;
-  role: string;
+  role?: string;
   term: string;
   location?: string;
 }
@@ -26,52 +28,88 @@ const { tag, firm, role, term, location } = Astro.props;
 ---
 
 <article class="entry hairline-cell" data-reveal>
-  <header class="entry__head">
+  <div class="entry__rail">
     <CatalogNumber label={tag} />
-    <h3 class="entry__title">{firm}</h3>
-    <p class="entry__meta">
-      {role && <span class="entry__role">{role}</span>}
-      <span class="entry__term">{term}</span>
-      {location && <span class="entry__loc">{location}</span>}
-    </p>
-  </header>
+    <p class="entry__term">{term}</p>
+    {location && <p class="entry__loc">{location}</p>}
+  </div>
 
-  <div class="entry__body">
-    <slot />
+  <div class="entry__main">
+    <h3 class="entry__title">{firm}</h3>
+    {role && <p class="entry__role">{role}</p>}
+    <div class="entry__body">
+      <slot />
+    </div>
   </div>
 </article>
 
 <style>
   .entry {
-    padding: clamp(var(--space-5), 3vw, var(--space-7));
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    /* no padding here — each column carries its own */
   }
 
-  .entry__head {
+  /* ---- left metadata rail ---- */
+  .entry__rail {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    margin-bottom: var(--space-5);
-  }
-  .entry__title {
-    font-size: var(--fs-h3);
+    padding: clamp(var(--space-5), 3vw, var(--space-7));
+    border-right: var(--border);
   }
 
-  .entry__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2) var(--space-4);
+  .entry__term,
+  .entry__loc {
     color: var(--c-text-faint);
     font-family: var(--font-mono);
     font-size: var(--fs-mono-label);
     letter-spacing: var(--ls-label);
     text-transform: uppercase;
+    line-height: var(--lh-mono);
+    margin: 0;
   }
+
+  /* ---- right main column ---- */
+  .entry__main {
+    padding: clamp(var(--space-5), 3vw, var(--space-7));
+  }
+
+  .entry__title {
+    font-size: var(--fs-h3);
+    margin-bottom: var(--space-2);
+  }
+
   .entry__role {
     color: var(--c-accent);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    margin: 0 0 var(--space-5);
   }
 
   .entry__body {
     max-width: var(--maxw-prose);
     color: var(--c-text-muted);
+    margin-top: var(--space-5);
+  }
+
+  /* ---- mobile: stack rail above main ---- */
+  @media (max-width: 640px) {
+    .entry {
+      grid-template-columns: 1fr;
+    }
+    .entry__rail {
+      border-right: none;
+      border-bottom: var(--border);
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--space-2) var(--space-5);
+      padding-bottom: var(--space-4);
+    }
+    .entry__body {
+      margin-top: var(--space-4);
+    }
   }
 </style>
