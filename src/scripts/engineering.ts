@@ -152,7 +152,7 @@ export function initEngineering(): void {
     rollers.forEach((gr) => { const c = gr.querySelector("circle"); if (c) gr.setAttribute("transform", `rotate(${rang.toFixed(1)} ${c.getAttribute("cx")} ${c.getAttribute("cy")})`); });
 
     if (phase === "feed") {
-      if (pT < 30) { pos[step].x = 14; pos[step].y = BELT; pos[step].vis = 1; }
+      if (pos[step].vis === 0) { pos[step].x = 14; pos[step].y = BELT; pos[step].vis = 1; }
       pos[step].x += (PICK.x - pos[step].x) * 0.08;       // ride the input belt to the pick point
       goal(PICK.x, PICK.y);
       if (Math.abs(pos[step].x - PICK.x) < 3 && near(PICK.x, PICK.y)) { phase = "grip"; pT = 0; }

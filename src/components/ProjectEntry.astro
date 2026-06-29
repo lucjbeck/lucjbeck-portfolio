@@ -22,10 +22,10 @@ interface Spec {
 interface Props {
   tag: string;
   title: string;
-  specs: Spec[];
+  specs?: Spec[];
 }
 
-const { tag, title, specs } = Astro.props;
+const { tag, title, specs = [] } = Astro.props;
 ---
 
 <article class="entry hairline-cell" data-reveal>
@@ -38,7 +38,7 @@ const { tag, title, specs } = Astro.props;
     <slot />
   </div>
 
-  <dl class="entry__specs" data-reveal-group="project-specs">
+  {specs.length > 0 && <dl class="entry__specs" data-reveal-group="project-specs">
     {
       specs.map((spec) => (
         <div class="entry__spec" data-reveal>
@@ -58,7 +58,7 @@ const { tag, title, specs } = Astro.props;
         </div>
       ))
     }
-  </dl>
+  </dl>}
 </article>
 
 <style>

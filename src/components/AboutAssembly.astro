@@ -1,76 +1,87 @@
 ---
 /**
- * AboutAssembly — TWO gantry cranes (each: a carriage sliding on a ceiling rail +
- * a vertical hoist with a gripper = X and Y prismatic DOF) assemble, in parallel,
- * a colored Penn shield on top and the word PENN below. Cranes stay fully in frame.
- * Pieces are already in their Penn colors (navy / red / white) and lock in with a
- * seeded slight rotation/offset. This #about exhibit is the ONLY place on the site
- * that uses color beyond the red accent. Logic in ../scripts/about.ts.
- * Plays on scroll-in; reduced-motion shows the finished result at rest.
+ * AboutAssembly — two 3-link robotic arms (bird's-eye / top-down view)
+ * assemble a colored Penn shield + "PENN" in parallel.
  *
- * Mount id: #about-assembly.
+ * Arm bases are slightly inset from the canvas edges (bx=45/555, by=300),
+ * with proper floor-standing base mount visuals (plate + column + pivot joint).
+ * Each arm has three links (upper arm, forearm, wrist) + elbow and wrist joints.
+ * The 3rd link always points toward the target for a natural "reaching" pose.
+ *
+ * Initial SVG positions correspond to the rest end-effector (200,300) / (400,300):
+ *   Left:  base(45,300) → elbow(113,155) → wrist(120,300) → grip(200,300)
+ *   Right: base(555,300) → elbow(487,155) → wrist(480,300) → grip(400,300)
+ *
+ * Logic in ../scripts/about.ts. Mount id: #about-assembly.
  */
-const VB = 600;
+const VB   = 600;
 const ticks = Array.from({ length: 9 }, (_, i) => 60 + i * 60);
 ---
 
-<div id="about-assembly" class="ab" role="img" aria-label="Two gantry cranes assembling a colored University of Pennsylvania shield and the word PENN from scattered colored blocks">
+<div id="about-assembly" class="ab" role="img"
+  aria-label="Two 3-link robotic arms (top-down view) assembling a University of Pennsylvania shield">
   <svg class="ab-svg" viewBox={`0 0 ${VB} ${VB}`} fill="none" aria-hidden="true">
-    <rect class="ab-surface" x="20" y="20" width="560" height="560" rx="6"></rect>
+    <rect class="ab-surface" x="20" y="20" width="560" height="560" rx="6" />
     {ticks.map((t) => (
-      <g class="ab-grid"><line x1={t} y1="20" x2={t} y2="580" /><line x1="20" y1={t} x2="580" y2={t} /></g>
+      <g class="ab-grid">
+        <line x1={t} y1="20" x2={t} y2="580" />
+        <line x1="20" y1={t} x2="580" y2={t} />
+      </g>
     ))}
 
-    <!-- ceiling rail -->
-    <line class="ab-rail" x1="34" y1="38" x2={VB - 34} y2="38"></line>
-    <line class="ab-rail2" x1="34" y1="42" x2={VB - 34} y2="42"></line>
-
     <!-- pieces created by the script -->
-    <g data-pieces></g>
+    <g data-pieces />
 
-    <!-- two gantry cranes (left half + right half) -->
-    <g class="ab-arm" data-arm="0" data-restx="200" data-min="110" data-max="300">
-      <rect class="ab-cart" data-cart x="182" y="28" width="36" height="16" rx="3"></rect>
-      <circle class="ab-rollsm" data-roll cx="190" cy="40" r="3"></circle>
-      <circle class="ab-rollsm" data-roll2 cx="210" cy="40" r="3"></circle>
-      <line class="ab-hoist" data-hoist x1="200" y1="44" x2="200" y2="300"></line>
-      <g class="ab-grip" data-grip transform="translate(200 300)">
-        <circle class="ab-grip-ring" r="9"></circle>
-        <line class="ab-grip-jaw" x1="-9" y1="2" x2="-9" y2="11"></line>
-        <line class="ab-grip-jaw" x1="9" y1="2" x2="9" y2="11"></line>
+    <!-- ── LEFT ARM — base at (90, 300) — well clear of shield left edge (x=180) ─── -->
+    <rect class="ab-base-plate" x="61"  y="292" width="58" height="20" rx="5" />
+    <rect class="ab-base-col"   x="78"  y="272" width="24" height="22" rx="3" />
+    <circle class="ab-base-pivot" cx="90" cy="300" r="9" />
+
+    <g class="ab-arm-2d" data-arm="0">
+      <!-- Approximate initial pose: end-effector reaching toward center-top -->
+      <line class="ab-ua" data-ua  x1="90"  y1="300" x2="68"  y2="185" />
+      <circle class="ab-ejoint" data-ej cx="68"  cy="185" r="6" />
+      <line class="ab-fa" data-fa  x1="68"  y1="185" x2="130" y2="231" />
+      <circle class="ab-wjoint" data-wj cx="130" cy="231" r="4" />
+      <line class="ab-wr" data-wr  x1="130" y1="231" x2="150" y2="240" />
+      <g class="ab-grip" data-grip transform="translate(150 240)">
+        <circle class="ab-grip-ring" r="8" />
+        <line class="ab-grip-jaw" x1="-5" y1="-8" x2="5" y2="-8" />
+        <line class="ab-grip-jaw" x1="-5" y1="8"  x2="5" y2="8" />
       </g>
     </g>
-    <g class="ab-arm" data-arm="1" data-restx="400" data-min="300" data-max="490">
-      <rect class="ab-cart" data-cart x="382" y="28" width="36" height="16" rx="3"></rect>
-      <circle class="ab-rollsm" data-roll cx="390" cy="40" r="3"></circle>
-      <circle class="ab-rollsm" data-roll2 cx="410" cy="40" r="3"></circle>
-      <line class="ab-hoist" data-hoist x1="400" y1="44" x2="400" y2="300"></line>
-      <g class="ab-grip" data-grip transform="translate(400 300)">
-        <circle class="ab-grip-ring" r="9"></circle>
-        <line class="ab-grip-jaw" x1="-9" y1="2" x2="-9" y2="11"></line>
-        <line class="ab-grip-jaw" x1="9" y1="2" x2="9" y2="11"></line>
+
+    <!-- ── RIGHT ARM — base at (510, 300) — well clear of shield right edge (x=420) ─ -->
+    <rect class="ab-base-plate" x="481" y="292" width="58" height="20" rx="5" />
+    <rect class="ab-base-col"   x="498" y="272" width="24" height="22" rx="3" />
+    <circle class="ab-base-pivot" cx="510" cy="300" r="9" />
+
+    <g class="ab-arm-2d" data-arm="1">
+      <line class="ab-ua" data-ua  x1="510" y1="300" x2="532" y2="185" />
+      <circle class="ab-ejoint" data-ej cx="532" cy="185" r="6" />
+      <line class="ab-fa" data-fa  x1="532" y1="185" x2="470" y2="231" />
+      <circle class="ab-wjoint" data-wj cx="470" cy="231" r="4" />
+      <line class="ab-wr" data-wr  x1="470" y1="231" x2="450" y2="240" />
+      <g class="ab-grip" data-grip transform="translate(450 240)">
+        <circle class="ab-grip-ring" r="8" />
+        <line class="ab-grip-jaw" x1="-5" y1="-8" x2="5" y2="-8" />
+        <line class="ab-grip-jaw" x1="-5" y1="8"  x2="5" y2="8" />
       </g>
     </g>
   </svg>
 </div>
 
 <style>
-  .ab { width: 100%; max-width: 500px; margin-inline: auto; filter: drop-shadow(0 0 26px rgba(230, 57, 70, 0.06)); }
+  .ab {
+    width: 100%;
+    max-width: 500px;
+    margin-inline: auto;
+    filter: drop-shadow(0 0 26px rgba(230, 57, 70, 0.06));
+  }
   .ab-svg { width: 100%; height: auto; display: block; }
   .ab-surface { fill: var(--c-bg-elev); stroke: var(--c-hairline-strong); stroke-width: 1.5; }
   .ab-grid line { stroke: var(--c-hairline); stroke-width: 1; }
-  .ab-rail { stroke: var(--c-hairline-strong); stroke-width: 1.5; }
-  .ab-rail2 { stroke: var(--c-hairline); stroke-width: 1.5; }
 
-  /* pieces carry their Penn color the whole time (color only inside #about). */
-  :global(.ab-pc) {
-    stroke-width: 1.5;
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-  :global(.ab-pc.navy) { fill: #011F5B; stroke: #012a7a; }
-  :global(.ab-pc.red)  { fill: #990000; stroke: #b51111; }
-  :global(.ab-pc.white){ fill: #EDEDED; stroke: #ffffff; }
   :global(.ab-letter) {
     fill: #011F5B;
     font-family: var(--font-display);
@@ -82,13 +93,73 @@ const ticks = Array.from({ length: 9 }, (_, i) => 60 + i * 60);
     transform-origin: center;
   }
 
-  .ab-cart { fill: var(--c-bg-elev-2); stroke: var(--c-text-faint); stroke-width: 1.5; }
-  .ab-rollsm { fill: var(--c-bg); stroke: var(--c-text-faint); stroke-width: 1.5; }
-  .ab-hoist { stroke: var(--c-text-muted); stroke-width: 4; stroke-linecap: round; }
-  .ab-grip-ring { fill: var(--c-bg); stroke: var(--c-text-faint); stroke-width: 2.5; }
-  .ab-grip-jaw { stroke: var(--c-text-faint); stroke-width: 2.5; stroke-linecap: round; }
+  /* ── floor-standing base mount ── */
+  /* heavy horizontal plate — sits on the work surface */
+  .ab-base-plate {
+    fill: var(--c-bg-elev-2);
+    stroke: var(--c-text-muted);
+    stroke-width: 1.5;
+  }
+  /* vertical column rising from the plate to the shoulder joint */
+  .ab-base-col {
+    fill: var(--c-bg-elev-2);
+    stroke: var(--c-text-faint);
+    stroke-width: 1;
+  }
+  /* shoulder joint pivot (rotation axis at top of column) */
+  .ab-base-pivot {
+    fill: var(--c-bg);
+    stroke: var(--c-text-muted);
+    stroke-width: 2.5;
+  }
+
+  /* ── arm links — shadow goes lower-right (matching block depth direction) ── */
+  .ab-ua {
+    stroke: var(--c-text-muted);
+    stroke-width: 10;
+    stroke-linecap: round;
+    filter: drop-shadow(4px 4px 5px rgba(0,0,0,0.55));
+  }
+  .ab-fa {
+    stroke: var(--c-text-muted);
+    stroke-width: 8;
+    stroke-linecap: round;
+    filter: drop-shadow(4px 4px 4px rgba(0,0,0,0.4));
+  }
+  .ab-wr {
+    stroke: var(--c-text-muted);
+    stroke-width: 5;
+    stroke-linecap: round;
+    filter: drop-shadow(3px 3px 3px rgba(0,0,0,0.3));
+  }
+
+  /* ── joints ── */
+  .ab-ejoint {
+    fill: var(--c-bg);
+    stroke: var(--c-text-faint);
+    stroke-width: 2;
+  }
+  .ab-wjoint {
+    fill: var(--c-bg);
+    stroke: var(--c-text-faint);
+    stroke-width: 1.5;
+  }
+
+  /* ── gripper ── */
+  .ab-grip-ring {
+    fill: var(--c-bg);
+    stroke: var(--c-text-faint);
+    stroke-width: 2.5;
+  }
+  .ab-grip-jaw {
+    stroke: var(--c-text-faint);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
   .ab-grip.is-gripping .ab-grip-ring,
-  .ab-grip.is-gripping .ab-grip-jaw { stroke: var(--c-accent); }
+  .ab-grip.is-gripping .ab-grip-jaw {
+    stroke: var(--c-accent);
+  }
 </style>
 
 <script>

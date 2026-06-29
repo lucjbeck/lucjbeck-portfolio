@@ -18,6 +18,7 @@ import ResearchEntry from "../components/ResearchEntry.astro";
 import NanoSwitch from "../components/NanoSwitch.astro";
 import Publication from "../components/Publication.astro";
 import RoleEntry from "../components/RoleEntry.astro";
+import HandAnimation from "../components/HandAnimation.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 ---
 
@@ -33,27 +34,11 @@ import SiteFooter from "../components/SiteFooter.astro";
     </Section>
 
     <Section id="education" eyebrow="02" heading="Education" rule>
-      <EducationList />
-    </Section>
-
-    <Section id="engineering" eyebrow="03" heading="Engineering" rule>
-      <div class="split">
-        <div class="split__text" data-reveal>
-          <ProjectEntry
-            tag="PROJ-01"
-            title="Robotic Arm + ACT Policy"
-            specs={[
-              { label: "Demo", value: "x.com/lucjbeck", href: "https://x.com/lucjbeck" },
-            ]}
-          >
-            <p>
-              Building a robotic arm and training an action-chunking-with-transformers
-              (ACT) policy on it using Hugging Face / LeRobot. Still a work in progress.
-            </p>
-          </ProjectEntry>
+      <div class="edu-split">
+        <div class="edu-split__list" data-reveal>
+          <EducationList />
         </div>
-
-        <figure class="split__stage" data-reveal>
+        <figure class="edu-split__fig" data-reveal>
           <HanoiArm />
           <figcaption class="split__cap">
             <span aria-hidden="true">FIG. 03</span>
@@ -63,18 +48,50 @@ import SiteFooter from "../components/SiteFooter.astro";
       </div>
     </Section>
 
+    <Section id="engineering" eyebrow="03" heading="Engineering" rule>
+      <div class="eng-split">
+        <div class="eng-split__projects">
+          <div class="projects" data-reveal>
+            <ProjectEntry
+              tag="PROJ-01"
+              title="Robotic Arm + ACT Policy"
+              specs={[
+                { label: "Demo", value: "x.com/lucjbeck", href: "https://x.com/lucjbeck" },
+              ]}
+            >
+              <p>
+                Building a robotic arm and training an action-chunking-with-transformers
+                (ACT) policy on it using Hugging Face / LeRobot. Still a work in progress.
+              </p>
+            </ProjectEntry>
+
+            <ProjectEntry
+              tag="PROJ-02"
+              title="Next: Robotic Hand"
+            >
+              <p>
+                Building a dexterous robotic hand paired with an instrumented glove.
+                The glove captures human hand motion so the robot can be trained
+                directly on teleoperated demonstrations, giving it a path to develop
+                the fine-grained manipulation that standard robot arms lack.
+              </p>
+            </ProjectEntry>
+          </div>
+        </div>
+
+        <figure class="eng-split__fig" data-reveal>
+          <HandAnimation />
+          <figcaption class="split__cap">
+            <span aria-hidden="true">FIG. 05</span>
+            Teleoperation training loop: human glove drives the demo hand; the
+            policy hand learns to match. Motor positions stream to the graph below.
+          </figcaption>
+        </figure>
+      </div>
+    </Section>
+
     <Section id="research" eyebrow="04" heading="Research" rule>
       <div class="research-split">
-      <figure class="section-figure research-split__fig" data-reveal>
-        <NanoSwitch />
-        <figcaption>
-          <span aria-hidden="true">FIG. 04</span>
-          DNA nanoswitch, simulated as a flexible polymer. A streptavidin
-          analyte binds a biotin, the strand loops to bridge the second, then
-          releases.
-        </figcaption>
-      </figure>
-
       <div class="research-split__text">
       <ResearchEntry
         tag="SPEC-01"
@@ -109,6 +126,16 @@ import SiteFooter from "../components/SiteFooter.astro";
         </Fragment>
       </ResearchEntry>
       </div>
+
+      <figure class="section-figure research-split__fig" data-reveal>
+        <NanoSwitch />
+        <figcaption>
+          <span aria-hidden="true">FIG. 04</span>
+          DNA nanoswitch, simulated as a flexible polymer. A streptavidin
+          analyte binds a biotin, the strand loops to bridge the second, then
+          releases.
+        </figcaption>
+      </figure>
       </div>
     </Section>
 
@@ -138,7 +165,8 @@ import SiteFooter from "../components/SiteFooter.astro";
           tag="ROLE-02"
           firm="Construct Capital"
           role="Summer Analyst"
-          term="Summer 2025"
+          term="Summer 2026"
+          location="Washington, DC"
         >
           <p>
             I'm building AI agent infrastructure that streamlines the firm's
@@ -204,15 +232,27 @@ import SiteFooter from "../components/SiteFooter.astro";
     color: var(--c-accent);
   }
 
-  /* Generic text-left / animation-right split (Engineering). */
-  .split {
+  /* Education: list left, Hanoi figure sticky-right. Equal columns so the
+     education value cells don't have excess blank space for short entries. */
+  .edu-split {
     display: grid;
-    grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.55fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: clamp(var(--space-6), 4vw, var(--space-8));
-    align-items: start;
+    align-items: stretch;
   }
-  .split__stage { margin: 0; }
-  .split__text { min-width: 0; }
+  .edu-split__list { min-width: 0; }
+  .edu-split__fig {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    border: var(--border);
+    border-radius: var(--r-md);
+    background: var(--c-bg-elev);
+  }
   .split__cap {
     display: flex;
     flex-wrap: wrap;
@@ -226,23 +266,47 @@ import SiteFooter from "../components/SiteFooter.astro";
   }
   .split__cap span { color: var(--c-accent); }
   @media (max-width: 900px) {
-    .split { grid-template-columns: 1fr; }
-    .split__stage { order: 2; }
+    .edu-split { grid-template-columns: 1fr; }
+    .edu-split__fig { order: -1; }
+  }
+
+  /* Engineering: projects left, hand animation figure right. */
+  .eng-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: clamp(var(--space-6), 4vw, var(--space-8));
+    align-items: start;
+  }
+  .eng-split__projects { min-width: 0; }
+  .eng-split__fig {
+    margin: 0;
+    position: sticky;
+    top: 92px;
+  }
+  @media (max-width: 900px) {
+    .eng-split { grid-template-columns: 1fr; }
+    .eng-split__fig { position: static; order: -1; }
+  }
+
+  /* Stacked project entries within the left column. */
+  .projects {
+    display: grid;
+    gap: var(--space-6);
   }
 
   /* Nanoswitch figure side-by-side with the research text. */
   .research-split {
     display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     gap: clamp(var(--space-5), 3vw, var(--space-8));
     align-items: start;
   }
+  .research-split__text { min-width: 0; }
   .research-split__fig {
     margin: 0;
     position: sticky;
     top: 92px;
   }
-  .research-split__text { min-width: 0; }
   @media (max-width: 900px) {
     .research-split { grid-template-columns: 1fr; }
     .research-split__fig { position: static; }

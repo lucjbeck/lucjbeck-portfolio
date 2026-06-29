@@ -1,30 +1,53 @@
 /**
- * about.ts — TWO gantry cranes assemble a colored Penn shield + "PENN" in parallel.
+ * about.ts — Two robotic arms assembling the Penn shield from individual 3D-block cells.
  *
- * Each crane is a carriage on the ceiling rail (X) + a vertical hoist with a gripper
- * (Y) -- two prismatic DOF, so it always stays in frame. The shield is a 7x9 color
- * grid merged into rounded-rect pieces; pieces already carry their Penn color
- * (navy/red/white) and lock in with a seeded slight rotation/offset. Spring-eased
- * effector motion. Plays on scroll-in; reduced-motion shows the finished result.
- * Mode: two cranes working in parallel (left half / right half).
+ * Layout philosophy:
+ * - Every shield cell is a separate 34×34 3D block (one per grid position, no merging).
+ * - Scatter positions are in the LEFT columns (x=60,100,140) and RIGHT columns
+ *   (x=460,500,540) at the same row heights as the shield — so nothing sits under
+ *   the crest area (x=180–420, y=96–456) while it is being assembled.
+ * - Arms start from (90,300) and (510,300), well clear of the finished crest.
+ * - Stable IK prevents configuration flips. CRUISE is fast enough that the
+ *   assembly finishes while the user is still reading the About text (~20s).
  */
 
 const REDUCED = "(prefers-reduced-motion: reduce)";
-const SVGNS = "http://www.w3.org/2000/svg";
-const RAIL_Y = 42;
-const LIFT_Y = 64; // hoist-up height, above the shield top
+const SVGNS   = "http://www.w3.org/2000/svg";
+
+// Longer arms from further-out bases. Total reach = 305px.
+// Needed to cover from base (90,300) to far shield corner (260,96): ~221px (2-link component).
+const L1 = 120, L2 = 115, L3 = 70;
+
+const BASE = [
+  { bx: 90,  by: 300 },   // left arm — clear of shield left edge (x=180)
+  { bx: 510, by: 300 },   // right arm — clear of shield right edge (x=420)
+] as const;
+
+// After finishing, arms fold back to park position beside their bases
+const PARK_EE = [
+  { x: 34,  y: 300 },
+  { x: 566, y: 300 },
+] as const;
 
 const GRID = [
   "NNNNNNN", "NNNNNNN", "NNRWRNN", "NRRRRRN",
   "RWRRRWR", "NNNNNNN", ".NNNNN.", "..NNN..", "...N...",
 ];
 const CELL = 40;
+const BW   = CELL - 6;   // block width/height = 34px
 const colX = (c: number) => 180 + c * CELL;
-const rowY = (r: number) => 96 + r * CELL;
-const COLORCLASS: Record<string, string> = { N: "navy", R: "red", W: "white" };
+const rowY = (r: number) =>  96 + r * CELL;
 
-function mulberry32(a: number) {
-  return function () {
+const DEPTH = 5;
+const COLORS: Record<string, { top: string; side: string; base: string; stroke: string }> = {
+  N: { top: "#0D2E80", side: "#041548", base: "#020B2A", stroke: "#1A3D9A" },
+  R: { top: "#B80000", side: "#6B0000", base: "#420000", stroke: "#D41010" },
+  W: { top: "#F0F0F0", side: "#A8A8A8", base: "#888888", stroke: "#FFFFFF" },
+};
+
+function mulberry32(seed: number) {
+  let a = seed;
+  return () => {
     a |= 0; a = (a + 0x6d2b79f5) | 0;
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
@@ -32,132 +55,302 @@ function mulberry32(a: number) {
   };
 }
 
-type Piece = { el: SVGGraphicsElement; tx: number; ty: number; rot: number; ox: number; oy: number };
+type Piece = { el: SVGGElement; tx: number; ty: number };
+
+function ik2d(bx: number, by: number, tx: number, ty: number, side: number) {
+  let dx = tx - bx, dy = ty - by;
+  let d = Math.hypot(dx, dy);
+  if (d === 0) return { ex: bx + L1, ey: by };
+  const maxR = L1 + L2 - 1, minR = 2;
+  if (d > maxR) { dx *= maxR / d; dy *= maxR / d; d = maxR; }
+  if (d < minR) { dx *= minR / d; dy *= minR / d; d = minR; }
+  const c2 = Math.max(-1, Math.min(1, (d*d - L1*L1 - L2*L2) / (2*L1*L2)));
+  const a2  = Math.acos(c2);
+  const a1  = Math.atan2(dy, dx) - Math.atan2(side * L2 * Math.sin(a2), L1 + L2 * Math.cos(a2));
+  return { ex: bx + L1 * Math.cos(a1), ey: by + L1 * Math.sin(a1) };
+}
+
+// Stable 3-link IK: picks the elbow solution closest to prev position to avoid flips
+function ik3stable(bx: number, by: number, tx: number, ty: number, prevEx: number, prevEy: number) {
+  const dx = tx - bx, dy = ty - by;
+  const d  = Math.hypot(dx, dy) || 1;
+  const wx = tx - L3 * dx / d;
+  const wy = ty - L3 * dy / d;
+  const s1 = ik2d(bx, by, wx, wy, +1);
+  const s2 = ik2d(bx, by, wx, wy, -1);
+  const d1 = Math.hypot(s1.ex - prevEx, s1.ey - prevEy);
+  const d2 = Math.hypot(s2.ex - prevEx, s2.ey - prevEy);
+  const ch = d1 <= d2 ? s1 : s2;
+  return { ex: ch.ex, ey: ch.ey, wx, wy };
+}
+
+function createBlock(w: number, h: number, colorKey: string, layer: SVGGElement): SVGGElement {
+  const c = COLORS[colorKey];
+  const g = document.createElementNS(SVGNS, "g");
+  const hw = w / 2, hh = h / 2;
+
+  const bot = document.createElementNS(SVGNS, "polygon");
+  bot.setAttribute("fill", c.base);
+  bot.setAttribute("points",
+    `${-hw+DEPTH},${hh} ${hw+DEPTH},${hh} ${hw+DEPTH},${hh+DEPTH} ${-hw+DEPTH},${hh+DEPTH}`);
+
+  const rgt = document.createElementNS(SVGNS, "polygon");
+  rgt.setAttribute("fill", c.side);
+  rgt.setAttribute("points",
+    `${hw},${-hh} ${hw+DEPTH},${-hh+DEPTH} ${hw+DEPTH},${hh+DEPTH} ${hw},${hh}`);
+
+  const top = document.createElementNS(SVGNS, "rect");
+  top.setAttribute("x", String(-hw)); top.setAttribute("y", String(-hh));
+  top.setAttribute("width", String(w)); top.setAttribute("height", String(h));
+  top.setAttribute("rx", "2");
+  top.setAttribute("fill", c.top);
+  top.setAttribute("stroke", c.stroke); top.setAttribute("stroke-width", "1");
+
+  g.appendChild(bot); g.appendChild(rgt); g.appendChild(top);
+  layer.appendChild(g);
+  return g as SVGGElement;
+}
+
+function createLetterBlock(letter: string, layer: SVGGElement): SVGGElement {
+  const g = createBlock(BW, BW, "N", layer);
+  const t = document.createElementNS(SVGNS, "text");
+  t.setAttribute("x", "0"); t.setAttribute("y", "1");
+  t.setAttribute("text-anchor", "middle"); t.setAttribute("dominant-baseline", "central");
+  t.setAttribute("font-family", "var(--font-display)");
+  t.setAttribute("font-weight", "800"); t.setAttribute("font-size", "24");
+  t.setAttribute("fill", "#EDEDED"); t.setAttribute("opacity", "0.9");
+  t.textContent = letter;
+  g.appendChild(t);
+  return g as SVGGElement;
+}
 
 export function initAboutAssembly(): void {
   if (typeof window === "undefined") return;
-  const root = document.querySelector<HTMLElement>("#about-assembly");
+  const root  = document.querySelector<HTMLElement>("#about-assembly");
   if (!root) return;
-  const layer = root.querySelector<SVGGElement>("[data-pieces]");
-  const armGs = Array.from(root.querySelectorAll<SVGGElement>(".ab-arm"));
+  const layer  = root.querySelector<SVGGElement>("[data-pieces]");
+  const armGs  = Array.from(root.querySelectorAll<SVGGElement>(".ab-arm-2d"));
   if (!layer || armGs.length < 2) return;
   const rnd = mulberry32(20259);
 
-  // ---- shield pieces: merge horizontal runs, split runs longer than 4 ----
-  const specs: { cls: string; cs: number; ce: number; r: number }[] = [];
+  // ── One 34×34 block per shield cell ──────────────────────────────────
+  const pieces: Piece[] = [];
   GRID.forEach((row, r) => {
-    let c = 0;
-    while (c < 7) {
+    for (let c = 0; c < 7; c++) {
       const ch = row[c];
-      if (ch === ".") { c++; continue; }
-      let ce = c; while (ce + 1 < 7 && row[ce + 1] === ch) ce++;
-      const len = ce - c + 1;
-      if (len > 4) { const mid = c + Math.ceil(len / 2) - 1; specs.push({ cls: COLORCLASS[ch], cs: c, ce: mid, r }); specs.push({ cls: COLORCLASS[ch], cs: mid + 1, ce, r }); }
-      else specs.push({ cls: COLORCLASS[ch], cs: c, ce, r });
-      c = ce + 1;
+      if (ch === ".") continue;
+      pieces.push({ el: createBlock(BW, BW, ch, layer), tx: colX(c), ty: rowY(r) });
     }
   });
 
-  const pieces: Piece[] = [];
-  for (const s of specs) {
-    const w = (s.ce - s.cs + 1) * CELL - 6, h = CELL - 6;
-    const el = document.createElementNS(SVGNS, "rect");
-    el.setAttribute("class", `ab-pc ${s.cls}`);
-    el.setAttribute("x", String(-w / 2)); el.setAttribute("y", String(-h / 2));
-    el.setAttribute("width", String(w)); el.setAttribute("height", String(h)); el.setAttribute("rx", "6");
-    layer.appendChild(el);
-    pieces.push({ el, tx: (colX(s.cs) + colX(s.ce)) / 2, ty: rowY(s.r), rot: rnd() * 6 - 3, ox: rnd() * 4 - 2, oy: rnd() * 4 - 2 });
-  }
+  // PENN letters at row 9 (one row below shield) on the center columns
+  const LETTERS = [
+    { ch: "P", tx: colX(1) },  // x=220
+    { ch: "E", tx: colX(2) },  // x=260
+    { ch: "N", tx: colX(4) },  // x=340
+    { ch: "N", tx: colX(5) },  // x=380
+  ];
+  const letterPieces: Piece[] = LETTERS.map(lt => ({
+    el: createLetterBlock(lt.ch, layer),
+    tx: lt.tx, ty: rowY(9),    // y = 456
+  }));
+  const allPieces = [...pieces, ...letterPieces];
 
-  // ---- PENN letters ----
-  const letterPieces: Piece[] = [];
-  [{ ch: "P", x: 150 }, { ch: "E", x: 250 }, { ch: "N", x: 350 }, { ch: "N", x: 450 }].forEach((lt) => {
-    const el = document.createElementNS(SVGNS, "text");
-    el.setAttribute("class", "ab-letter");
-    el.textContent = lt.ch;
-    layer.appendChild(el);
-    letterPieces.push({ el, tx: lt.x, ty: 516, rot: rnd() * 8 - 4, ox: rnd() * 4 - 2, oy: rnd() * 4 - 2 });
-  });
-
-  // ---- order (shield top-rows first, then letters) + assign by side ----
-  const all = [...pieces].sort((a, b) => a.ty - b.ty).concat(letterPieces);
+  // ── Assign pieces to arms: left arm handles tx<300, right handles tx≥300 ─
+  const sorted = [...allPieces].sort((a, b) => a.ty - b.ty || a.tx - b.tx);
   const queues: Piece[][] = [[], []];
-  // left handles left targets, right handles right; centre-column pieces go to
-  // whichever queue is smaller, so both cranes finish at about the same time.
-  for (const p of all) {
-    if (p.tx < 300) queues[0].push(p);
+  for (const p of sorted) {
+    if      (p.tx < 300) queues[0].push(p);
     else if (p.tx > 300) queues[1].push(p);
     else queues[queues[0].length <= queues[1].length ? 0 : 1].push(p);
   }
 
-  // ---- deterministic scattered starts in each side's lower bin ----
-  const start = new Map<Piece, { x: number; y: number }>();
-  queues.forEach((q, a) => q.forEach((p, j) => {
-    const col = j % 4, row = Math.floor(j / 4);
-    start.set(p, { x: (a === 0 ? 120 : 330) + col * 42 + (rnd() * 8 - 4), y: 470 + row * 30 + (rnd() * 8 - 4) });
-  }));
-  for (const p of all) { const s = start.get(p)!; p.el.setAttribute("transform", `translate(${s.x.toFixed(1)} ${s.y.toFixed(1)})`); }
+  // ── Scatter: pieces wait in side columns OUTSIDE the shield area ──────
+  // Left arm pieces → 3 left columns (x=60,100,140), rows 0..11 (y=96..536)
+  // Right arm pieces → 3 right columns (x=460,500,540), same rows
+  // Positions that overlap each arm's base mount are excluded so no block
+  // renders behind the base plate. Also excludes positions within 55px of the
+  // arm pivot to avoid near-singularity IK glitches on pickup.
+  const LEFT_COLS  = [60, 100, 140];
+  const RIGHT_COLS = [460, 500, 540];
+  // Extra rows (11, 12) give enough slots if middle rows are excluded
+  const SCATTER_ROWS = Array.from({ length: 12 }, (_, r) => rowY(r));
 
-  const lock = (p: Piece) => p.el.setAttribute("transform", `translate(${(p.tx + p.ox).toFixed(1)} ${(p.ty + p.oy).toFixed(1)}) rotate(${p.rot.toFixed(1)})`);
+  function makeSidePositions(
+    cols: number[], baseCx: number, baseCy: number
+  ): { x: number; y: number }[] {
+    const BW2  = BW / 2 + DEPTH;        // half-block incl. 3D depth
+    // Left-arm plate: x=baseCx-29..baseCx+29, y=baseCy-28..baseCy+12
+    const px0 = baseCx - 29, px1 = baseCx + 29;
+    const py0 = baseCy - 28, py1 = baseCy + 12;
+    const MIN_DIST = 55;                 // min distance from pivot centre
 
-  // ---- crane controller (carriage X on rail + vertical hoist Y) ----
-  function makeCrane(g: SVGGElement) {
-    const restX = Number(g.dataset.restx), min = Number(g.dataset.min), max = Number(g.dataset.max);
-    const cart = g.querySelector<SVGRectElement>("[data-cart]")!;
-    const r1 = g.querySelector<SVGCircleElement>("[data-roll]")!;
-    const r2 = g.querySelector<SVGCircleElement>("[data-roll2]")!;
-    const hoist = g.querySelector<SVGLineElement>("[data-hoist]")!;
-    const grip = g.querySelector<SVGGElement>("[data-grip]")!;
-    const cur = { x: restX, y: 120 };
-    let carry: Piece | null = null;
-    const render = () => {
-      const cx = Math.max(min, Math.min(max, cur.x));
-      cart.setAttribute("x", (cx - 18).toFixed(1));
-      r1.setAttribute("cx", (cx - 10).toFixed(1)); r2.setAttribute("cx", (cx + 10).toFixed(1));
-      hoist.setAttribute("x1", cx.toFixed(1)); hoist.setAttribute("x2", cx.toFixed(1)); hoist.setAttribute("y2", cur.y.toFixed(1));
-      grip.setAttribute("transform", `translate(${cx.toFixed(1)} ${cur.y.toFixed(1)})`);
-      if (carry) carry.el.setAttribute("transform", `translate(${cx.toFixed(1)} ${cur.y.toFixed(1)})`);
-    };
-    const springTo = (gx: number, gy: number, k = 0.2, damp = 0.56) =>
-      new Promise<void>((res) => {
-        let vx = 0, vy = 0, f = 0;
-        const step = () => {
-          vx = (vx + (gx - cur.x) * k) * damp; vy = (vy + (gy - cur.y) * k) * damp;
-          cur.x += vx; cur.y += vy; render(); f++;
-          if ((Math.hypot(gx - cur.x, gy - cur.y) < 0.7 && Math.hypot(vx, vy) < 0.5) || f > 150) { cur.x = gx; cur.y = gy; render(); res(); }
-          else requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-      });
-    return { cur, restX, render, springTo, grip, setCarry: (c: Piece | null) => (carry = c) };
+    const pos: { x: number; y: number }[] = [];
+    for (const x of cols) {
+      for (const y of SCATTER_ROWS) {
+        // Block at (x,y) occupies x±BW2, y±BW2 (approx)
+        const overlapMount =
+          x - BW2 < px1 && x + BW2 > px0 &&
+          y - BW2 < py1 && y + BW2 > py0;
+        const tooClose = Math.hypot(x - baseCx, y - baseCy) < MIN_DIST;
+        if (!overlapMount && !tooClose) pos.push({ x, y });
+      }
+    }
+    // Shuffle deterministically
+    for (let i = pos.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      [pos[i], pos[j]] = [pos[j], pos[i]];
+    }
+    return pos;
   }
 
-  // reduced motion: finished colored result, cranes parked up at rest
+  const leftSlots  = makeSidePositions(LEFT_COLS,  BASE[0].bx, BASE[0].by);
+  const rightSlots = makeSidePositions(RIGHT_COLS, BASE[1].bx, BASE[1].by);
+
+  const startPos = new Map<Piece, { x: number; y: number }>();
+  queues[0].forEach((p, i) => startPos.set(p, leftSlots[i % leftSlots.length]));
+  queues[1].forEach((p, i) => startPos.set(p, rightSlots[i % rightSlots.length]));
+
+  // Place pieces at their scatter positions
+  for (const p of allPieces) {
+    const s = startPos.get(p)!;
+    p.el.setAttribute("transform", `translate(${s.x} ${s.y})`);
+  }
+
+  const lockPiece = (p: Piece) =>
+    p.el.setAttribute("transform", `translate(${p.tx} ${p.ty})`);
+
   if (window.matchMedia(REDUCED).matches) {
-    for (const p of all) lock(p);
-    armGs.forEach((g) => { const c = makeCrane(g); c.cur.x = c.restX; c.cur.y = 70; c.render(); });
+    for (const p of allPieces) lockPiece(p);
     return;
   }
 
-  async function runCrane(g: SVGGElement, q: Piece[]) {
-    const cr = makeCrane(g);
-    for (const p of q) {
-      const s = start.get(p)!;
-      await cr.springTo(s.x, s.y);              // slide over piece, hoist down
-      cr.grip.classList.add("is-gripping");
-      cr.setCarry(p);
-      await new Promise((r) => setTimeout(r, 80));
-      await cr.springTo(p.tx, p.ty, 0.2, 0.55); // straight to its place (carriage + hoist together)
-      cr.setCarry(null);
-      lock(p);
-      cr.grip.classList.remove("is-gripping");
-      await new Promise((r) => setTimeout(r, 120));
-    }
-    await cr.springTo(cr.restX, 70, 0.1, 0.7);  // park up at rest
+  // ── Arm renderer ──────────────────────────────────────────────────────
+  function makeArm(g: SVGGElement, cfg: typeof BASE[number]) {
+    const ua   = g.querySelector<SVGLineElement>("[data-ua]")!;
+    const ej   = g.querySelector<SVGCircleElement>("[data-ej]")!;
+    const fa   = g.querySelector<SVGLineElement>("[data-fa]")!;
+    const wj   = g.querySelector<SVGCircleElement>("[data-wj]")!;
+    const wr   = g.querySelector<SVGLineElement>("[data-wr]")!;
+    const grip = g.querySelector<SVGGElement>("[data-grip]")!;
+
+    const side = cfg.bx < 300 ? +1 : -1;
+    // Start at a comfortable mid-reach above the base (no near-singularity)
+    const cur  = { x: cfg.bx + side * 120, y: cfg.by - 150 };
+    const vel  = { x: 0, y: 0 };
+    // Seed elbow hint above & slightly outward so first IK solution is "elbow down"
+    let prevEx = cfg.bx + side * 40;
+    let prevEy = cfg.by - 120;
+
+    const render = () => {
+      const ik = ik3stable(cfg.bx, cfg.by, cur.x, cur.y, prevEx, prevEy);
+      prevEx = ik.ex; prevEy = ik.ey;
+      ua.setAttribute("x1", String(cfg.bx)); ua.setAttribute("y1", String(cfg.by));
+      ua.setAttribute("x2", ik.ex.toFixed(1)); ua.setAttribute("y2", ik.ey.toFixed(1));
+      ej.setAttribute("cx", ik.ex.toFixed(1)); ej.setAttribute("cy", ik.ey.toFixed(1));
+      fa.setAttribute("x1", ik.ex.toFixed(1)); fa.setAttribute("y1", ik.ey.toFixed(1));
+      fa.setAttribute("x2", ik.wx.toFixed(1)); fa.setAttribute("y2", ik.wy.toFixed(1));
+      wj.setAttribute("cx", ik.wx.toFixed(1)); wj.setAttribute("cy", ik.wy.toFixed(1));
+      wr.setAttribute("x1", ik.wx.toFixed(1)); wr.setAttribute("y1", ik.wy.toFixed(1));
+      wr.setAttribute("x2", cur.x.toFixed(1)); wr.setAttribute("y2", cur.y.toFixed(1));
+      grip.setAttribute("transform", `translate(${cur.x.toFixed(1)} ${cur.y.toFixed(1)})`);
+    };
+    render();
+    return { cur, vel, render, grip, g };
   }
 
+  // ── Velocity-steering motion ──────────────────────────────────────────
+  const CRUISE   = 13.0;
+  const STEER    = 0.22;
+  const R_COARSE = 14;    // px: pickup radius (small = block doesn't visibly jump on grab)
+  const R_FINE   = 11;    // px: lock placed piece at target (must be > CRUISE for capture)
+
+  type Phase = "reach" | "carry" | "park";
+  interface ArmState {
+    arm: ReturnType<typeof makeArm>;
+    phase: Phase;
+    idx: number;
+    carry: Piece | null;
+    target: { x: number; y: number };
+    queue: Piece[];
+    done: boolean;
+  }
+
+  function steer(vel: { x: number; y: number }, cur: { x: number; y: number },
+                 tgt: { x: number; y: number }): number {
+    const dx = tgt.x - cur.x, dy = tgt.y - cur.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 0.1) {
+      vel.x += ((dx / dist) * CRUISE - vel.x) * STEER;
+      vel.y += ((dy / dist) * CRUISE - vel.y) * STEER;
+    }
+    cur.x += vel.x; cur.y += vel.y;
+    return dist;
+  }
+
+  function tickArm(s: ArmState): void {
+    if (s.done) return;
+    const dist = steer(s.arm.vel, s.arm.cur, s.target);
+    s.arm.render();
+
+    if (s.carry) {
+      s.carry.el.setAttribute("transform",
+        `translate(${s.arm.cur.x.toFixed(1)} ${s.arm.cur.y.toFixed(1)})`);
+    }
+
+    const thresh = s.phase === "carry" ? R_FINE : R_COARSE;
+    if (dist < thresh) {
+      if (s.phase === "reach") {
+        s.carry = s.queue[s.idx];
+        layer.appendChild(s.carry.el);  // carried piece renders on top
+        s.arm.grip.classList.add("is-gripping");
+        s.phase = "carry";
+        s.target = { x: s.queue[s.idx].tx, y: s.queue[s.idx].ty };
+
+      } else if (s.phase === "carry") {
+        lockPiece(s.queue[s.idx]);
+        s.carry = null;
+        s.arm.grip.classList.remove("is-gripping");
+        s.idx++;
+
+        if (s.idx < s.queue.length) {
+          s.phase = "reach";
+          s.target = startPos.get(s.queue[s.idx])!;
+        } else {
+          s.phase = "park";
+          s.target = PARK_EE[armGs.indexOf(s.arm.g)] ?? PARK_EE[0];
+        }
+
+      } else {
+        s.done = true;
+      }
+    }
+  }
+
+  // ── Start on scroll ───────────────────────────────────────────────────
   const io = new IntersectionObserver((entries) => {
-    for (const e of entries) if (e.isIntersecting) { io.disconnect(); runCrane(armGs[0], queues[0]); runCrane(armGs[1], queues[1]); break; }
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      io.disconnect();
+
+      const states: ArmState[] = BASE.map((cfg, ai) => ({
+        arm: makeArm(armGs[ai], cfg),
+        phase: "reach" as Phase,
+        idx: 0,
+        carry: null,
+        target: startPos.get(queues[ai][0])!,
+        queue: queues[ai],
+        done: queues[ai].length === 0,
+      }));
+
+      const animate = () => {
+        tickArm(states[0]);
+        tickArm(states[1]);
+        if (!states[0].done || !states[1].done) requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+      break;
+    }
   }, { rootMargin: "0px 0px -15% 0px" });
   io.observe(root);
 }
