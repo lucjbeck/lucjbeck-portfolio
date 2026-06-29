@@ -1,13 +1,14 @@
 ---
 /**
- * HandAnimation — imitation-learning teleoperation schematic.
- * Left: a REAL human hand (filled beige skin, full fingers) wearing motion-
- *       capture sensor markers on each joint. The forearm runs off the bottom
- *       of the panel (clipped) so it clearly belongs to a person off-frame.
- * Right: a floor-mounted 2-link robot arm with a mechanical hand at the tip
- *        that copies the human pose in real-time.
+ * HandAnimation — teleoperation imitation loop.
+ * Left  : a human hand (filled beige skin) whose fingers CURL at three joints
+ *         each and whose WRIST turns. Motion-capture markers sit on every joint.
+ *         The forearm runs off the bottom of the panel (clipped) — it belongs to
+ *         a person off-frame.
+ * Right : a robot hand rigidly mounted on a fixed, simple arm (no arm DOF). It
+ *         only copies the human's finger curls and wrist turn.
  * Bottom: scrolling joint-angle graph for M0–M3.
- * Driven by ../scripts/hand.ts.
+ * Finger geometry here MUST match FINGERS in ../scripts/hand.ts.
  */
 
 const VW = 800;
@@ -16,7 +17,7 @@ const PANEL_W = 340;
 const PANEL_H = 280;
 const GAP = 80;
 const LEFT_X  = 20;
-const RIGHT_X = LEFT_X + PANEL_W + GAP;   // 440 (right panel 440..780, fits in VW=800)
+const RIGHT_X = LEFT_X + PANEL_W + GAP;   // 440
 const PANEL_Y = 20;
 const GRAPH_Y = PANEL_Y + PANEL_H + 16;   // 316
 const GRAPH_H = VH - GRAPH_Y - 20;
@@ -33,15 +34,78 @@ const GRAPH_X = 20;
 const GRAPH_W = VW - 40;
 const CHAN_H  = Math.floor((GRAPH_H - LEGEND_H) / MOTORS.length);
 
-// Human hand group centre (inside left panel)
 const DEMO_CX  = LEFT_X + PANEL_W / 2;        // 190
 const DEMO_HCY = PANEL_Y + PANEL_H / 2 + 6;   // 166
 
-// Robot arm (right panel); shoulder joint fixed, links move by IK
-const ARM_SX = RIGHT_X + PANEL_W / 2;  // 650
-const ARM_SY = PANEL_Y + PANEL_H - 44; // 256
-const INIT_EX = ARM_SX - 40, INIT_EY = ARM_SY - 66;
-const INIT_WX = ARM_SX,      INIT_WY = ARM_SY - 118;
+// Robot arm — fixed (no DOF). Base at bottom, rigid links up to the hand mount.
+const ARM_SX = RIGHT_X + PANEL_W / 2;  // 610
+const ARM_SY = PANEL_Y + PANEL_H - 24; // 276 — base/turret
+const ELBOW_X = ARM_SX + 46, ELBOW_Y = ARM_SY - 56;
+const MOUNT_X = ARM_SX,      MOUNT_Y = PANEL_Y + 130;  // 150 — hand mounts here
+
+// ── Finger geometry (shared by both hands; mirrors hand.ts FINGERS) ──────────
+// j = [MCP, PIP, DIP] y-positions (fingers point up = negative y); tip y; width.
+const FINGERS = [
+  { mx: -16, j: [-28, -54, -74], tip: -90, w: 12 }, // index
+  { mx:  -4, j: [-28, -58, -80], tip: -98, w: 12 }, // middle
+  { mx:   9, j: [-28, -54, -74], tip: -88, w: 11 }, // ring
+  { mx:  22, j: [-24, -44, -60], tip: -72, w: 10 }, // pinky
+];
+const THUMB = { mx: -26, j: [-8, -28], tip: -44, w: 13, rot: -42 };
+
+type Mode = "human" | "robot";
+const cls = (m: Mode) => m === "human"
+  ? { seg: "ha-skin ha-fseg", mcp: "ha-sensor", mid: "ha-sensor-dim", tip: "ha-sensor-tip" }
+  : { seg: "ha-rob-seg",      mcp: "ha-rob-joint", mid: "ha-rob-joint", tip: "ha-rob-tip" };
+
+const cap = (mx: number, top: number, bot: number, w: number, c: string) =>
+  `<rect class="${c}" x="${(mx - w / 2).toFixed(1)}" y="${top.toFixed(1)}" ` +
+  `width="${w.toFixed(1)}" height="${(bot - top + w * 0.45).toFixed(1)}" rx="${(w / 2).toFixed(1)}" />`;
+
+// Three-jointed finger → nested data-j1/j2/j3 groups so each joint curls.
+function finger3(f: typeof FINGERS[number], idx: number, m: Mode): string {
+  const c = cls(m);
+  const { mx, j, tip, w } = f;
+  return `
+  <g class="ha-finger" data-finger="${idx}">
+    <g data-j1>
+      ${cap(mx, j[1], j[0], w, c.seg)}
+      <circle class="${c.mcp}" cx="${mx}" cy="${j[0]}" r="3" />
+      <g data-j2>
+        ${cap(mx, j[2], j[1], w * 0.9, c.seg)}
+        <circle class="${c.mid}" cx="${mx}" cy="${j[1]}" r="2.4" />
+        <g data-j3>
+          ${cap(mx, tip, j[2], w * 0.8, c.seg)}
+          <circle class="${c.mid}" cx="${mx}" cy="${j[2]}" r="2.2" />
+          <circle class="${c.tip}" cx="${mx}" cy="${tip}" r="3" />
+        </g>
+      </g>
+    </g>
+  </g>`;
+}
+
+// Two-jointed thumb with a static splay rotation around its CMC joint.
+function thumb(t: typeof THUMB, m: Mode): string {
+  const c = cls(m);
+  const { mx, j, tip, w, rot } = t;
+  return `
+  <g class="ha-finger" data-finger="4">
+    <g transform="rotate(${rot} ${mx} ${j[0]})">
+      <g data-j1>
+        ${cap(mx, j[1], j[0], w, c.seg)}
+        <circle class="${c.mcp}" cx="${mx}" cy="${j[0]}" r="3" />
+        <g data-j2>
+          ${cap(mx, tip, j[1], w * 0.85, c.seg)}
+          <circle class="${c.mid}" cx="${mx}" cy="${j[1]}" r="2.4" />
+          <circle class="${c.tip}" cx="${mx}" cy="${tip}" r="3" />
+        </g>
+      </g>
+    </g>
+  </g>`;
+}
+
+const fingersHtml = (m: Mode) =>
+  FINGERS.map((f, i) => finger3(f, i, m)).join("") + thumb(THUMB, m);
 ---
 
 <div id="hand-anim" class="ha" role="img"
@@ -49,7 +113,6 @@ const INIT_WX = ARM_SX,      INIT_WY = ARM_SY - 118;
   <svg class="ha-svg" viewBox={`0 0 ${VW} ${VH}`} fill="none" aria-hidden="true">
 
     <defs>
-      <!-- Clip so the human forearm is cleanly cut at the panel's bottom edge -->
       <clipPath id="ha-left-clip">
         <rect x={LEFT_X} y={PANEL_Y} width={PANEL_W} height={PANEL_H} rx="4" />
       </clipPath>
@@ -60,161 +123,60 @@ const INIT_WX = ARM_SX,      INIT_WY = ARM_SY - 118;
     <text class="ha-label"    x={LEFT_X + 10}            y={PANEL_Y + 18}>TELEOPERATION</text>
     <text class="ha-sublabel" x={LEFT_X + PANEL_W - 10}  y={PANEL_Y + 18} text-anchor="end">MOTION CAPTURE</text>
 
-    <!--
-      Human arm + hand. Everything is clipped to the panel so the forearm
-      runs off the bottom edge (it continues to the body off-frame).
-      Local coords (origin = DEMO_CX, DEMO_HCY):
-        y < 0  → UP   (fingers point up)
-        y > 0  → DOWN (forearm runs down off-panel)
-    -->
     <g clip-path="url(#ha-left-clip)">
       <g id="demo-hand" transform={`translate(${DEMO_CX} ${DEMO_HCY})`}>
 
-        <!-- ── FOREARM — filled skin, runs off the bottom of the panel ──── -->
-        <polygon class="ha-skin ha-forearm"
-          points="-15,8 15,8 30,150 -30,150" />
-        <!-- soft shading down the centre of the forearm -->
+        <!-- Forearm runs off the bottom of the panel (static; the wrist turns) -->
+        <polygon class="ha-skin ha-forearm" points="-15,8 15,8 30,150 -30,150" />
         <path class="ha-skin-shade" d="M 0,16 L 0,150" />
 
-        <!-- Wrist mocap band (data source) with status LEDs -->
-        <rect class="ha-wrist-band" x="-22" y="6" width="44" height="15" rx="5" />
-        <circle class="ha-band-led ha-led-on" cx="-12" cy="13.5" r="2" />
-        <circle class="ha-band-led ha-led-on" cx="-4"  cy="13.5" r="2" />
-        <circle class="ha-band-led"           cx="4"   cy="13.5" r="2" />
-        <circle class="ha-band-led"           cx="12"  cy="13.5" r="2" />
+        <!-- Wrist mocap band -->
+        <rect class="ha-wrist-band" x="-22" y="4" width="44" height="15" rx="5" />
+        <circle class="ha-band-led ha-led-on" cx="-12" cy="11.5" r="2" />
+        <circle class="ha-band-led ha-led-on" cx="-4"  cy="11.5" r="2" />
+        <circle class="ha-band-led"           cx="4"   cy="11.5" r="2" />
+        <circle class="ha-band-led"           cx="12"  cy="11.5" r="2" />
 
-        <!-- ── PALM (filled skin) ─────────────────────────────────────── -->
-        <path class="ha-skin ha-palm"
-          d="M -30,-26 Q -33,-31 -27,-31 L 27,-31 Q 33,-31 30,-26
-             L 23,12 Q 23,18 16,18 L -16,18 Q -23,18 -23,12 Z" />
-        <!-- thumb web + palm crease shading -->
-        <path class="ha-skin-shade" d="M -20,-6 Q -2,-2 18,-9" />
-        <path class="ha-skin-shade" d="M -21,-17 Q -6,-13 9,-16" />
-
-        <!-- ── FINGERS (filled capsules, rotate about MCP pivots) ──────── -->
-        <!-- Order MUST be thumb, index, middle, ring, pinky to match hand.ts -->
-
-        <!-- THUMB — pivot (-26,-8); inner static tilt up-left -->
-        <g class="ha-finger" data-finger="0">
-          <g transform="rotate(-42 -26 -8)">
-            <rect class="ha-skin ha-fseg" x="-33" y="-46" width="14" height="44" rx="7" />
-            <circle class="ha-sensor"      cx="-26" cy="-30" r="2.6" />
-            <circle class="ha-sensor-tip"  cx="-26" cy="-44" r="3" />
-          </g>
-          <circle class="ha-sensor" cx="-26" cy="-10" r="3" />
+        <!-- Everything below the wrist turns together (data-wrist) -->
+        <g data-wrist>
+          <path class="ha-skin ha-palm"
+            d="M -30,-26 Q -33,-31 -27,-31 L 27,-31 Q 33,-31 30,-26
+               L 23,10 Q 23,16 16,16 L -16,16 Q -23,16 -23,10 Z" />
+          <path class="ha-skin-shade" d="M -20,-6 Q -2,-2 18,-9" />
+          <path class="ha-skin-shade" d="M -21,-17 Q -6,-13 9,-16" />
+          <circle class="ha-sensor ha-sensor-anchor" cx="-2" cy="-4" r="3.2" />
+          <g set:html={fingersHtml("human")} />
         </g>
-
-        <!-- INDEX — pivot (-16,-28) -->
-        <g class="ha-finger" data-finger="1">
-          <rect class="ha-skin ha-fseg" x="-22.5" y="-88" width="13" height="68" rx="6.5" />
-          <circle class="ha-sensor"     cx="-16" cy="-30" r="3" />
-          <circle class="ha-sensor-dim" cx="-16" cy="-55" r="2.5" />
-          <circle class="ha-sensor-tip" cx="-16" cy="-84" r="3" />
-        </g>
-
-        <!-- MIDDLE — pivot (-4,-28), longest -->
-        <g class="ha-finger" data-finger="2">
-          <rect class="ha-skin ha-fseg" x="-10.5" y="-96" width="13" height="76" rx="6.5" />
-          <circle class="ha-sensor"     cx="-4" cy="-30" r="3" />
-          <circle class="ha-sensor-dim" cx="-4" cy="-58" r="2.5" />
-          <circle class="ha-sensor-tip" cx="-4" cy="-92" r="3" />
-        </g>
-
-        <!-- RING — pivot (9,-28) -->
-        <g class="ha-finger" data-finger="3">
-          <rect class="ha-skin ha-fseg" x="2.5" y="-88" width="13" height="68" rx="6.5" />
-          <circle class="ha-sensor"     cx="9" cy="-30" r="3" />
-          <circle class="ha-sensor-dim" cx="9" cy="-55" r="2.5" />
-          <circle class="ha-sensor-tip" cx="9" cy="-84" r="3" />
-        </g>
-
-        <!-- PINKY — pivot (22,-24), shortest -->
-        <g class="ha-finger" data-finger="4">
-          <rect class="ha-skin ha-fseg" x="16.5" y="-72" width="11" height="56" rx="5.5" />
-          <circle class="ha-sensor"     cx="22" cy="-26" r="2.6" />
-          <circle class="ha-sensor-dim" cx="22" cy="-48" r="2.2" />
-          <circle class="ha-sensor-tip" cx="22" cy="-68" r="2.6" />
-        </g>
-
-        <!-- Back-of-hand reference marker -->
-        <circle class="ha-sensor ha-sensor-anchor" cx="-2" cy="-4" r="3.4" />
       </g>
     </g>
 
-    <!-- ── Training signal stream (dots flowing left → right) ──────────── -->
+    <!-- ── Training-signal stream (human → robot) ──────────────────────── -->
     <g id="stream-dots" />
 
     <!-- ── RIGHT PANEL: Robot arm + hand ───────────────────────────────── -->
     <rect class="ha-panel" x={RIGHT_X} y={PANEL_Y} width={PANEL_W} height={PANEL_H} rx="4" />
     <text class="ha-label"    x={RIGHT_X + 10}            y={PANEL_Y + 18}>ROBOT</text>
-    <text class="ha-sublabel" x={RIGHT_X + PANEL_W - 10}  y={PANEL_Y + 18} text-anchor="end">ARM + HAND</text>
+    <text class="ha-sublabel" x={RIGHT_X + PANEL_W - 10}  y={PANEL_Y + 18} text-anchor="end">MOUNTED HAND</text>
     <circle class="ha-rec-dot" cx={RIGHT_X + PANEL_W - 48} cy={PANEL_Y + 11} r="4" />
     <text class="ha-rec-label" x={RIGHT_X + PANEL_W - 40} y={PANEL_Y + 15}>REC</text>
 
-    <!-- Robot arm: base → shoulder → upper arm → elbow → forearm → wrist -->
+    <!-- Fixed, simple arm: base → rigid links → hand mount. No arm DOF. -->
     <g id="robot-arm">
-      <rect class="ha-rob-base"   x={ARM_SX - 30} y={ARM_SY + 18} width="60" height="12" rx="4" />
-      <rect class="ha-rob-turret" x={ARM_SX - 15} y={ARM_SY - 4} width="30" height="22" rx="4" />
-      <circle class="ha-rob-shoulder" cx={ARM_SX} cy={ARM_SY} r="10" />
-      <line class="ha-arm-ua" id="rob-ua" x1={ARM_SX} y1={ARM_SY} x2={INIT_EX} y2={INIT_EY} />
-      <circle class="ha-arm-ej" id="rob-ej" cx={INIT_EX} cy={INIT_EY} r="7" />
-      <line class="ha-arm-fa" id="rob-fa" x1={INIT_EX} y1={INIT_EY} x2={INIT_WX} y2={INIT_WY} />
-      <circle class="ha-arm-wrist" id="rob-wrist" cx={INIT_WX} cy={INIT_WY} r="5" />
+      <rect class="ha-rob-base"   x={ARM_SX - 32} y={ARM_SY + 8} width="64" height="12" rx="4" />
+      <rect class="ha-rob-turret" x={ARM_SX - 16} y={ARM_SY - 8} width="32" height="20" rx="4" />
+      <circle class="ha-rob-shoulder" cx={ARM_SX} cy={ARM_SY} r="9" />
+      <line class="ha-arm-ua" x1={ARM_SX} y1={ARM_SY} x2={ELBOW_X} y2={ELBOW_Y} />
+      <circle class="ha-arm-ej" cx={ELBOW_X} cy={ELBOW_Y} r="7" />
+      <line class="ha-arm-fa" x1={ELBOW_X} y1={ELBOW_Y} x2={MOUNT_X} y2={MOUNT_Y} />
+      <rect class="ha-rob-mount" x={MOUNT_X - 14} y={MOUNT_Y - 2} width="28" height="14" rx="3" />
     </g>
 
-    <!-- Ghost traces rendered above arm, below robot hand -->
-    <g id="ghost-traces" />
-
-    <!--
-      Robot hand — rides at the arm tip (transform set by hand.ts).
-      Pivots match hand.ts FINGER_DEFS so rotations sync with the human hand.
-    -->
-    <g id="policy-hand" transform={`translate(${INIT_WX} ${INIT_WY})`}>
-      <rect class="ha-rob-wrist-bar" x="-12" y="16" width="24" height="8" rx="2" />
-      <polygon class="ha-palm--robot" points="-28,-26 28,-26 18,14 -18,14" />
-
-      <!-- Thumb (pivot -26,-8) -->
-      <g class="ha-finger" data-finger="0">
-        <line class="ha-rob-bone" x1="-26" y1="-8"  x2="-40" y2="-22" />
-        <line class="ha-rob-bone" x1="-40" y1="-22" x2="-49" y2="-37" />
-        <circle class="ha-rob-joint" cx="-40" cy="-22" r="3" />
-        <circle class="ha-rob-tip"   cx="-51" cy="-40" r="3.5" />
-      </g>
-      <!-- Index (pivot -16,-28) -->
-      <g class="ha-finger" data-finger="1">
-        <line class="ha-rob-bone" x1="-16" y1="-28" x2="-16" y2="-55" />
-        <line class="ha-rob-bone" x1="-16" y1="-55" x2="-16" y2="-73" />
-        <line class="ha-rob-bone" x1="-16" y1="-73" x2="-16" y2="-86" />
-        <circle class="ha-rob-joint" cx="-16" cy="-55" r="3" />
-        <circle class="ha-rob-joint" cx="-16" cy="-73" r="2.5" />
-        <circle class="ha-rob-tip"   cx="-16" cy="-89" r="3" />
-      </g>
-      <!-- Middle (pivot -4,-28) -->
-      <g class="ha-finger" data-finger="2">
-        <line class="ha-rob-bone" x1="-4" y1="-28" x2="-4" y2="-59" />
-        <line class="ha-rob-bone" x1="-4" y1="-59" x2="-4" y2="-79" />
-        <line class="ha-rob-bone" x1="-4" y1="-79" x2="-4" y2="-94" />
-        <circle class="ha-rob-joint" cx="-4" cy="-59" r="3" />
-        <circle class="ha-rob-joint" cx="-4" cy="-79" r="2.5" />
-        <circle class="ha-rob-tip"   cx="-4" cy="-97" r="3" />
-      </g>
-      <!-- Ring (pivot 9,-28) -->
-      <g class="ha-finger" data-finger="3">
-        <line class="ha-rob-bone" x1="9" y1="-28" x2="9" y2="-55" />
-        <line class="ha-rob-bone" x1="9" y1="-55" x2="9" y2="-73" />
-        <line class="ha-rob-bone" x1="9" y1="-73" x2="9" y2="-84" />
-        <circle class="ha-rob-joint" cx="9" cy="-55" r="3" />
-        <circle class="ha-rob-joint" cx="9" cy="-73" r="2.5" />
-        <circle class="ha-rob-tip"   cx="9" cy="-87" r="3" />
-      </g>
-      <!-- Pinky (pivot 22,-24) -->
-      <g class="ha-finger" data-finger="4">
-        <line class="ha-rob-bone" x1="22" y1="-24" x2="22" y2="-44" />
-        <line class="ha-rob-bone" x1="22" y1="-44" x2="22" y2="-60" />
-        <line class="ha-rob-bone" x1="22" y1="-60" x2="22" y2="-70" />
-        <circle class="ha-rob-joint" cx="22" cy="-44" r="2.5" />
-        <circle class="ha-rob-joint" cx="22" cy="-60" r="2" />
-        <circle class="ha-rob-tip"   cx="22" cy="-73" r="2.5" />
+    <!-- Robot hand — rigidly mounted; only fingers curl + wrist turns -->
+    <g id="policy-hand" transform={`translate(${MOUNT_X} ${MOUNT_Y})`}>
+      <rect class="ha-rob-wrist-bar" x="-13" y="2" width="26" height="9" rx="2" />
+      <g data-wrist>
+        <polygon class="ha-palm--robot" points="-28,-26 28,-26 18,12 -18,12" />
+        <g set:html={fingersHtml("robot")} />
       </g>
     </g>
 
@@ -270,69 +232,46 @@ const INIT_WX = ARM_SX,      INIT_WY = ARM_SY - 118;
   .ha-rec-label { fill: var(--c-accent); font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.08em; }
 
   /* ── Human hand — filled beige skin ───────────────────────────── */
-  .ha-skin {
-    fill: #D9B48F;             /* warm beige skin tone */
-    stroke: #A87E58;
-    stroke-width: 1.4;
-    stroke-linejoin: round;
-  }
-  .ha-fseg  { fill: #E0BD97; }  /* fingers slightly lighter than palm */
-  .ha-palm  { fill: #D9B48F; }
-  .ha-forearm { fill: #CDA47C; } /* forearm slightly deeper for depth */
-  .ha-skin-shade {
-    fill: none;
-    stroke: #B0875F;
-    stroke-width: 1;
-    stroke-linecap: round;
-    opacity: 0.5;
-  }
+  .ha-skin   { fill: #D9B48F; stroke: #A87E58; stroke-width: 1.4; stroke-linejoin: round; }
+  :global(.ha-fseg) { fill: #E0BD97; stroke: #A87E58; stroke-width: 1.3; }
+  .ha-palm    { fill: #D9B48F; }
+  .ha-forearm { fill: #CDA47C; }
+  .ha-skin-shade { fill: none; stroke: #B0875F; stroke-width: 1; stroke-linecap: round; opacity: 0.5; }
 
-  /* Wrist mocap band */
-  .ha-wrist-band {
-    fill: var(--c-bg-elev-2);
-    stroke: var(--c-accent);
-    stroke-width: 1.5;
-  }
+  .ha-wrist-band { fill: var(--c-bg-elev-2); stroke: var(--c-accent); stroke-width: 1.5; }
   .ha-band-led { fill: var(--c-bg); stroke: var(--c-text-faint); stroke-width: 0.7; }
   .ha-led-on   { fill: var(--c-accent); stroke: none; }
 
-  /* Motion-capture sensor markers — bright accent, glowing, sit ON the skin */
-  .ha-sensor {
-    fill: var(--c-accent);
-    stroke: #FFFFFF;
-    stroke-width: 0.8;
+  /* Motion-capture markers (sit on the skin) */
+  :global(.ha-sensor) {
+    fill: var(--c-accent); stroke: #FFFFFF; stroke-width: 0.8;
     filter: drop-shadow(0 0 4px var(--c-accent));
   }
-  .ha-sensor-dim {
-    fill: var(--c-accent);
-    fill-opacity: 0.7;
-    stroke: #FFFFFF;
-    stroke-width: 0.6;
+  :global(.ha-sensor-dim) {
+    fill: var(--c-accent); fill-opacity: 0.7; stroke: #FFFFFF; stroke-width: 0.6;
     filter: drop-shadow(0 0 3px var(--c-accent));
   }
-  .ha-sensor-tip {
-    fill: #FFFFFF;
-    stroke: var(--c-accent);
-    stroke-width: 1.4;
+  :global(.ha-sensor-tip) {
+    fill: #FFFFFF; stroke: var(--c-accent); stroke-width: 1.4;
     filter: drop-shadow(0 0 4px var(--c-accent));
   }
   .ha-sensor-anchor { stroke-width: 1.1; }
 
-  /* ── Robot arm ──────────────────────────────────────────────── */
+  /* ── Robot arm (fixed) ──────────────────────────────────────── */
   .ha-rob-base     { fill: var(--c-bg-elev-2); stroke: var(--c-accent); stroke-width: 2; }
   .ha-rob-turret   { fill: var(--c-bg-elev-2); stroke: var(--c-text-muted); stroke-width: 1.5; }
   .ha-rob-shoulder { fill: var(--c-bg); stroke: var(--c-accent); stroke-width: 2.5; }
   .ha-arm-ua { stroke: var(--c-accent); stroke-width: 9; stroke-linecap: round; opacity: 0.8; }
-  .ha-arm-fa { stroke: var(--c-accent); stroke-width: 6; stroke-linecap: round; opacity: 0.75; }
+  .ha-arm-fa { stroke: var(--c-accent); stroke-width: 7; stroke-linecap: round; opacity: 0.75; }
   .ha-arm-ej { fill: var(--c-bg); stroke: var(--c-accent); stroke-width: 2; }
-  .ha-arm-wrist { fill: var(--c-bg); stroke: var(--c-accent); stroke-width: 1.5; }
+  .ha-rob-mount { fill: var(--c-bg-elev-2); stroke: var(--c-accent); stroke-width: 1.5; }
 
   /* ── Robot hand ─────────────────────────────────────────────── */
   .ha-rob-wrist-bar { fill: var(--c-bg-elev-2); stroke: var(--c-accent); stroke-width: 1.5; }
   .ha-palm--robot   { fill: var(--c-bg-elev-2); stroke: var(--c-accent); stroke-width: 1.5; stroke-linejoin: round; }
-  .ha-rob-bone  { stroke: var(--c-accent); stroke-width: 2.5; stroke-linecap: round; }
-  .ha-rob-joint { fill: var(--c-bg); stroke: var(--c-accent); stroke-width: 1.5; }
-  .ha-rob-tip   { fill: var(--c-accent); fill-opacity: 0.4; stroke: var(--c-accent); stroke-width: 1.5; }
+  :global(.ha-rob-seg)   { fill: var(--c-bg-elev-2); stroke: var(--c-accent); stroke-width: 1.5; }
+  :global(.ha-rob-joint) { fill: var(--c-bg); stroke: var(--c-accent); stroke-width: 1.4; }
+  :global(.ha-rob-tip)   { fill: var(--c-accent); fill-opacity: 0.4; stroke: var(--c-accent); stroke-width: 1.4; }
 
   /* ── Graph ──────────────────────────────────────────────────── */
   .ha-graph-bg    { fill: var(--c-bg-elev); stroke: var(--c-hairline-strong); stroke-width: 1.5; }

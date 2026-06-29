@@ -14,10 +14,14 @@
 const REDUCED = "(prefers-reduced-motion: reduce)";
 const SVGNS   = "http://www.w3.org/2000/svg";
 
-// Longer arms from further-out bases. 2-link reach = 245px, +L3 wrist = 315px.
-// Extra margin on the 2-link sum keeps the elbow away from the full-stretch
-// singularity (the source of the elbow "flip"/teleport) at the farthest cells.
-const L1 = 125, L2 = 120, L3 = 70;
+// Two NEAR-EQUAL links. This is deliberate: a 2-link arm's inner singularity
+// (where the elbow can flip) sits at distance |L1-L2| from the base. Making the
+// links almost equal collapses that singularity to ~0px from the base, which the
+// end-effector never reaches — so the elbow never flips, even when the EE path
+// grazes the base. Total reach L1+L2 = 315px covers the farthest cell (~273px).
+// The "wrist" is purely cosmetic: a marker placed partway along the 2nd link.
+const L1 = 158, L2 = 157;
+const WRIST_FRAC = 0.55;   // wrist joint sits 55% from elbow → grip along link 2
 
 const BASE = [
   { bx: 90,  by: 300 },   // left arm — clear of shield left edge (x=180)
@@ -25,7 +29,6 @@ const BASE = [
 ] as const;
 
 // After finishing, arms fold back to a park pose up-and-out beside their bases.
-// Kept well clear of the base (dist > L3) so the wrist link never degenerates.
 const PARK_EE = [
   { x: 60,  y: 168 },
   { x: 540, y: 168 },
@@ -70,20 +73,6 @@ function ik2d(bx: number, by: number, tx: number, ty: number, side: number) {
   const a2  = Math.acos(c2);
   const a1  = Math.atan2(dy, dx) - Math.atan2(side * L2 * Math.sin(a2), L1 + L2 * Math.cos(a2));
   return { ex: bx + L1 * Math.cos(a1), ey: by + L1 * Math.sin(a1) };
-}
-
-// Stable 3-link IK: picks the elbow solution closest to prev position to avoid flips
-function ik3stable(bx: number, by: number, tx: number, ty: number, prevEx: number, prevEy: number) {
-  const dx = tx - bx, dy = ty - by;
-  const d  = Math.hypot(dx, dy) || 1;
-  const wx = tx - L3 * dx / d;
-  const wy = ty - L3 * dy / d;
-  const s1 = ik2d(bx, by, wx, wy, +1);
-  const s2 = ik2d(bx, by, wx, wy, -1);
-  const d1 = Math.hypot(s1.ex - prevEx, s1.ey - prevEy);
-  const d2 = Math.hypot(s2.ex - prevEx, s2.ey - prevEy);
-  const ch = d1 <= d2 ? s1 : s2;
-  return { ex: ch.ex, ey: ch.ey, wx, wy };
 }
 
 function createBlock(w: number, h: number, colorKey: string, layer: SVGGElement): SVGGElement {
@@ -187,9 +176,8 @@ export function initAboutAssembly(): void {
     // Left-arm plate: x=baseCx-29..baseCx+29, y=baseCy-28..baseCy+12
     const px0 = baseCx - 29, px1 = baseCx + 29;
     const py0 = baseCy - 28, py1 = baseCy + 12;
-    // Keep every scatter slot well outside the wrist-link length (L3=70) from the
-    // pivot. Targets closer than ~L3 make the "third link points at target" math
-    // overshoot the base and the wrist spins — the teleport the arms showed.
+    // Keep scatter slots away from the base so the arm isn't grabbing from a
+    // fully-folded pose, and so piles read as piles around the workspace edge.
     const MIN_DIST = 95;
 
     const pos: { x: number; y: number }[] = [];
@@ -252,29 +240,32 @@ export function initAboutAssembly(): void {
     const wr   = g.querySelector<SVGLineElement>("[data-wr]")!;
     const grip = g.querySelector<SVGGElement>("[data-grip]")!;
 
-    const side = cfg.bx < 300 ? +1 : -1;
-    // Start at a comfortable mid-reach above the base (no near-singularity)
-    const cur  = { x: cfg.bx + side * 120, y: cfg.by - 150 };
+    // Fixed elbow branch per arm — the one that keeps the elbow on-canvas across
+    // the whole workspace. With a fixed side there is no solution-switching, so
+    // the elbow can never flip. Left arm bends one way, right arm mirrors it.
+    const side = cfg.bx < 300 ? -1 : +1;
+    // Start at a sensible in-frame rest pose reaching up toward the work area.
+    const cur  = { x: cfg.bx + (cfg.bx < 300 ? 90 : -90), y: cfg.by - 130 };
     const vel  = { x: 0, y: 0 };
-    // Seed elbow hint above & slightly outward so first IK solution is "elbow down"
-    let prevEx = cfg.bx + side * 40;
-    let prevEy = cfg.by - 120;
 
     const render = () => {
-      const ik = ik3stable(cfg.bx, cfg.by, cur.x, cur.y, prevEx, prevEy);
-      prevEx = ik.ex; prevEy = ik.ey;
+      const { ex, ey } = ik2d(cfg.bx, cfg.by, cur.x, cur.y, side);
+      // cosmetic wrist marker partway along the rigid 2nd link (elbow → grip)
+      const wx = ex + WRIST_FRAC * (cur.x - ex);
+      const wy = ey + WRIST_FRAC * (cur.y - ey);
+
       ua.setAttribute("x1", String(cfg.bx)); ua.setAttribute("y1", String(cfg.by));
-      ua.setAttribute("x2", ik.ex.toFixed(1)); ua.setAttribute("y2", ik.ey.toFixed(1));
-      ej.setAttribute("cx", ik.ex.toFixed(1)); ej.setAttribute("cy", ik.ey.toFixed(1));
-      fa.setAttribute("x1", ik.ex.toFixed(1)); fa.setAttribute("y1", ik.ey.toFixed(1));
-      fa.setAttribute("x2", ik.wx.toFixed(1)); fa.setAttribute("y2", ik.wy.toFixed(1));
-      wj.setAttribute("cx", ik.wx.toFixed(1)); wj.setAttribute("cy", ik.wy.toFixed(1));
-      wr.setAttribute("x1", ik.wx.toFixed(1)); wr.setAttribute("y1", ik.wy.toFixed(1));
+      ua.setAttribute("x2", ex.toFixed(1)); ua.setAttribute("y2", ey.toFixed(1));
+      ej.setAttribute("cx", ex.toFixed(1)); ej.setAttribute("cy", ey.toFixed(1));
+      fa.setAttribute("x1", ex.toFixed(1)); fa.setAttribute("y1", ey.toFixed(1));
+      fa.setAttribute("x2", wx.toFixed(1)); fa.setAttribute("y2", wy.toFixed(1));
+      wj.setAttribute("cx", wx.toFixed(1)); wj.setAttribute("cy", wy.toFixed(1));
+      wr.setAttribute("x1", wx.toFixed(1)); wr.setAttribute("y1", wy.toFixed(1));
       wr.setAttribute("x2", cur.x.toFixed(1)); wr.setAttribute("y2", cur.y.toFixed(1));
       grip.setAttribute("transform", `translate(${cur.x.toFixed(1)} ${cur.y.toFixed(1)})`);
     };
     render();
-    return { cur, vel, render, grip, g };
+    return { cur, vel, render, grip, g, base: cfg };
   }
 
   // ── Velocity-steering motion ──────────────────────────────────────────
@@ -295,20 +286,27 @@ export function initAboutAssembly(): void {
   }
 
   function steer(vel: { x: number; y: number }, cur: { x: number; y: number },
-                 tgt: { x: number; y: number }): number {
+                 tgt: { x: number; y: number },
+                 base: { bx: number; by: number }): number {
     const dx = tgt.x - cur.x, dy = tgt.y - cur.y;
     const dist = Math.hypot(dx, dy);
     if (dist > 0.1) {
       vel.x += ((dx / dist) * CRUISE - vel.x) * STEER;
       vel.y += ((dy / dist) * CRUISE - vel.y) * STEER;
     }
-    cur.x += vel.x; cur.y += vel.y;
+    // Slow the end-effector as it passes near the base. Near the base the arm is
+    // nearly folded, so the kinematics amplify EE motion into large elbow swings;
+    // crawling through that zone spreads the elbow sweep smoothly across frames
+    // instead of whipping it in one frame.
+    const db   = Math.hypot(cur.x - base.bx, cur.y - base.by);
+    const slow = Math.max(0.22, Math.min(1, (db - 50) / 110));
+    cur.x += vel.x * slow; cur.y += vel.y * slow;
     return dist;
   }
 
   function tickArm(s: ArmState): void {
     if (s.done) return;
-    const dist = steer(s.arm.vel, s.arm.cur, s.target);
+    const dist = steer(s.arm.vel, s.arm.cur, s.target, s.arm.base);
     s.arm.render();
 
     if (s.carry) {
