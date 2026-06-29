@@ -1,22 +1,27 @@
 ---
 /**
- * EngineeringHero.astro — landing signature: a physics assembly line.
- * A conveyor carries parts (real belt friction + gravity ambience). An IK arm
- * picks the incoming parts off the line and assembles a recognizable little
- * rover at the jig (chassis, two wheels, body, sensor head, antenna); the
- * finished rover then rolls off and the line repeats. Instrument palette,
- * one accent. Driven by ../scripts/engineering.ts. SSR renders a static frame.
+ * EngineeringHero.astro — landing signature: an overhead gantry assembly line.
+ * A carriage rides a ceiling rail (a prismatic DOF) and a two-link arm hangs from
+ * it, so the whole thing obeys a real gantry kinematic and never reaches up from
+ * the floor. It picks parts off a physics conveyor and assembles ONE OF THREE
+ * products in rotation (rover, drone, robot); the finished unit rolls off and the
+ * next is built. Driven by ../scripts/engineering.ts. SSR shows a static frame.
  *
  * Mount id: #eng-hero. Geometry mirrored in the script.
  */
 const VW = 560;
 const VH = 320;
+const RAIL_Y = 40;
 const BELT_Y = 276;
 const rollers = [60, 180, 300, 420, 510];
 ---
 
-<div id="eng-hero" class="eng" role="img" aria-label="Robotic assembly line: an arm picks parts off a conveyor and assembles a small rover, which rolls away">
+<div id="eng-hero" class="eng" role="img" aria-label="Overhead gantry assembly line: a ceiling-mounted arm picks parts off a conveyor and assembles a product, which rolls away">
   <svg class="eng-svg" viewBox={`0 0 ${VW} ${VH}`} fill="none" aria-hidden="true">
+    <!-- ceiling rail -->
+    <line class="eng-rail" x1="20" y1={RAIL_Y} x2={VW - 20} y2={RAIL_Y}></line>
+    <line class="eng-rail-2" x1="20" y1={RAIL_Y + 4} x2={VW - 20} y2={RAIL_Y + 4}></line>
+
     <!-- conveyor + rollers -->
     <rect class="eng-belt" x="16" y={BELT_Y} width={VW - 32} height="10" rx="5"></rect>
     {rollers.map((rx) => (
@@ -30,35 +35,30 @@ const rollers = [60, 180, 300, 420, 510];
     <!-- ambient parts flowing on the belt (belt physics) -->
     <g data-amb-layer>
       {Array.from({ length: 6 }).map(() => (
-        <rect class="eng-amb" data-amb x="0" y="0" width="18" height="14" rx="2" style="opacity:0" />
+        <rect class="eng-amb" data-amb x="0" y="0" width="18" height="13" rx="2" style="opacity:0" />
       ))}
     </g>
 
-    <!-- the rover parts: each travels from the belt to its place on the jig -->
-    <g data-parts>
-      <rect data-part class="eng-part" x="-26" y="-7" width="52" height="14" rx="2" style="opacity:0"></rect>
-      <circle data-part class="eng-part" cx="0" cy="0" r="8" style="opacity:0"></circle>
-      <circle data-part class="eng-part" cx="0" cy="0" r="8" style="opacity:0"></circle>
-      <rect data-part class="eng-part" x="-17" y="-11" width="34" height="22" rx="2" style="opacity:0"></rect>
-      <rect data-part class="eng-part" x="-10" y="-7" width="20" height="14" rx="2" style="opacity:0"></rect>
-      <g data-part class="eng-part--accent" style="opacity:0">
-        <line x1="0" y1="6" x2="0" y2="-10"></line>
-        <circle cx="0" cy="-13" r="3.5"></circle>
-      </g>
-    </g>
+    <!-- product parts created dynamically by the script -->
+    <g data-parts></g>
 
-    <!-- IK assembly arm, base (300,250) -->
-    <polygon class="eng-armbase" points="278,266 322,266 314,244 286,244"></polygon>
-    <g class="eng-sh" data-arm-sh transform="rotate(0 300 250)">
-      <rect class="eng-link" x="294" y="158" width="12" height="92" rx="6"></rect>
-      <circle class="eng-joint" cx="300" cy="250" r="7"></circle>
-      <g class="eng-el" data-arm-el transform="rotate(0 300 158)">
-        <rect class="eng-link" x="295" y="70" width="10" height="90" rx="5"></rect>
-        <circle class="eng-joint" cx="300" cy="158" r="6"></circle>
-        <g class="eng-grip" data-arm-grip>
-          <line class="eng-prong" x1="291" y1="82" x2="291" y2="66"></line>
-          <line class="eng-prong" x1="309" y1="82" x2="309" y2="66"></line>
-          <line class="eng-knuckle" x1="291" y1="82" x2="309" y2="82"></line>
+    <!-- gantry carriage on the rail (slides horizontally), arm hangs below.
+         Rest pivot x = 280; the script translates the carriage along the rail. -->
+    <g class="eng-carriage" data-carriage transform="translate(0 0)">
+      <rect class="eng-cart" x="262" y="30" width="36" height="18" rx="3"></rect>
+      <circle class="eng-roller-sm" cx="270" cy="40" r="3"></circle>
+      <circle class="eng-roller-sm" cx="290" cy="40" r="3"></circle>
+      <g class="eng-sh" data-arm-sh transform="rotate(0 280 54)">
+        <rect class="eng-link" x="274" y="54" width="12" height="108" rx="6"></rect>
+        <circle class="eng-joint" cx="280" cy="54" r="6"></circle>
+        <g class="eng-el" data-arm-el transform="rotate(0 280 162)">
+          <rect class="eng-link" x="275" y="162" width="10" height="104" rx="5"></rect>
+          <circle class="eng-joint" cx="280" cy="162" r="5"></circle>
+          <g class="eng-grip" data-arm-grip>
+            <line class="eng-prong" x1="272" y1="266" x2="272" y2="280"></line>
+            <line class="eng-prong" x1="288" y1="266" x2="288" y2="280"></line>
+            <line class="eng-knuckle" x1="272" y1="266" x2="288" y2="266"></line>
+          </g>
         </g>
       </g>
     </g>
@@ -69,20 +69,24 @@ const rollers = [60, 180, 300, 420, 510];
   .eng { width: 100%; max-width: 640px; margin-inline: auto; filter: drop-shadow(0 0 26px rgba(230, 57, 70, 0.07)); }
   .eng-svg { width: 100%; height: auto; overflow: visible; }
 
+  .eng-rail { stroke: var(--c-hairline-strong); stroke-width: 1.5; }
+  .eng-rail-2 { stroke: var(--c-hairline); stroke-width: 1.5; }
   .eng-belt { fill: var(--c-bg-elev); stroke: var(--c-hairline-strong); stroke-width: 1; }
   .eng-roller circle { fill: none; stroke: var(--c-text-faint); stroke-width: 1.5; }
   .eng-roller line { stroke: var(--c-hairline-strong); stroke-width: 1.5; }
+  .eng-roller-sm { fill: var(--c-bg); stroke: var(--c-text-faint); stroke-width: 1.5; }
 
   .eng-amb { fill: var(--c-bg-elev-2); stroke: var(--c-hairline-strong); stroke-width: 1; }
 
-  .eng-armbase { fill: var(--c-bg-elev); stroke: var(--c-text-faint); stroke-width: 1.5; }
+  .eng-cart { fill: var(--c-bg-elev-2); stroke: var(--c-text-faint); stroke-width: 1.5; }
   .eng-link { fill: var(--c-bg-elev-2); stroke: var(--c-text-muted); stroke-width: 1.5; }
   .eng-joint { fill: var(--c-bg); stroke: var(--c-text-faint); stroke-width: 1.5; }
   .eng-prong, .eng-knuckle { stroke: var(--c-accent); stroke-width: 3; stroke-linecap: round; }
 
-  .eng-part { fill: var(--c-bg-elev-2); stroke: var(--c-text-muted); stroke-width: 1.5; }
-  .eng-part--accent line { stroke: var(--c-accent); stroke-width: 2.5; stroke-linecap: round; }
-  .eng-part--accent circle { fill: var(--c-accent); }
+  :global(.eng-part) { fill: var(--c-bg-elev-2); stroke: var(--c-text-muted); stroke-width: 1.5; }
+  :global(.eng-part-hot) { fill: var(--c-accent-dim); stroke: var(--c-accent); stroke-width: 1.5; }
+  :global(.eng-ant line) { stroke: var(--c-accent); stroke-width: 2.5; stroke-linecap: round; }
+  :global(.eng-ant circle) { fill: var(--c-accent); }
 </style>
 
 <script>

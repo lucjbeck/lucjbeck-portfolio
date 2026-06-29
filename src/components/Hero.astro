@@ -13,22 +13,22 @@ import EngineeringHero from "./EngineeringHero.astro";
     <div class="hero__copy" data-reveal>
       <p class="hero__eyebrow">
         Student at the University of Pennsylvania
-        <span class="hero__eyebrow-tag">SPECIMEN 00</span>
+        <span class="hero__eyebrow-tag">PROFILE // 00</span>
       </p>
 
       <h1 id="hero-name" class="hero__name">Luc Beck</h1>
 
       <p class="hero__lede">
-        Electrical Engineering and AI at Penn. I do biophysics research on DNA
-        nanoswitches and build systems that learn.
+        Electrical Engineering and Artificial Intelligence at Penn, fascinated by
+        the intersection of physics and AI.
       </p>
 
       <p class="hero__meta">
         <span class="hero__meta-item">Engineer</span>
         <span class="hero__meta-sep" aria-hidden="true">/</span>
-        <span class="hero__meta-item">Entrepreneur</span>
+        <span class="hero__meta-item">Researcher</span>
         <span class="hero__meta-sep" aria-hidden="true">/</span>
-        <span class="hero__meta-item">Venture Capitalist</span>
+        <span class="hero__meta-item">Builder</span>
       </p>
     </div>
 
@@ -36,7 +36,7 @@ import EngineeringHero from "./EngineeringHero.astro";
       <EngineeringHero />
       <p class="hero__caption">
         <span aria-hidden="true">FIG. 00</span>
-        Automated line. Systems that build, move, and learn.
+        The future of manufacturing: Systems that move, learn, and build.
       </p>
     </div>
   </Container>
@@ -44,11 +44,13 @@ import EngineeringHero from "./EngineeringHero.astro";
 
 <style>
   .hero {
-    min-height: 100dvh;
+    /* fill the viewport BELOW the sticky nav so the content centers in the
+       visible area instead of overflowing under the fold (was bottom-heavy). */
+    min-height: calc(100svh - 58px);
     display: flex;
     align-items: center;
     border-bottom: var(--border);
-    padding-block: var(--space-8);
+    padding-block: clamp(var(--space-5), 4vh, var(--space-7));
   }
 
   .hero :global(.hero__inner) {

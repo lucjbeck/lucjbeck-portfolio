@@ -1,26 +1,34 @@
 ---
 /**
- * RobotArm.astro — Engineering section: a working two-link pick-and-place arm.
- * Driven by inverse kinematics (../scripts/robotarm.ts): the arm reaches a feeder,
- * the gripper closes on a block, carries it via real forward kinematics, and
- * stacks it on the left; after a few it ships the stack and repeats. SVG attribute
- * transforms (rotate about explicit pivots) give correct nested kinematics.
- * SSR renders a posed static arm for reduced-motion / no-JS.
+ * RobotArm.astro — Engineering section: a 3-DOF pick-and-place arm.
+ * Shoulder + elbow position the wrist (closed-form IK), and a wrist DOF keeps the
+ * gripper vertical so it descends onto parts from ABOVE -- the linkage never dips
+ * below the floor. It grips blocks from a feeder table on the right, carries them,
+ * and stacks them on the left table; after a few it ships the stack and repeats.
+ * Driven by ../scripts/robotarm.ts. SSR renders a posed static arm.
  *
- * Mount id: #robot-arm. Geometry pivots are mirrored in the script.
+ * Mount id: #robot-arm. Geometry pivots mirrored in the script.
  */
 const VW = 360;
 const VH = 300;
 ---
 
-<div id="robot-arm" class="ra" role="img" aria-label="Two-link robotic arm performing a pick-and-place cycle: it grips blocks from a feeder and stacks them">
+<div id="robot-arm" class="ra" role="img" aria-label="Three-degree-of-freedom robotic arm gripping blocks from a feeder and stacking them, with the gripper always descending from above">
   <svg class="ra-svg" viewBox={`0 0 ${VW} ${VH}`} fill="none" aria-hidden="true">
-    <line class="ra-ground" x1="30" y1="272" x2="330" y2="272"></line>
-    <!-- feeder (right) and stack pad (left) -->
-    <rect class="ra-pad" x="270" y="264" width="40" height="8" rx="2"></rect>
-    <rect class="ra-pad" x="54" y="264" width="52" height="8" rx="2"></rect>
+    <line class="ra-ground" x1="24" y1="276" x2="336" y2="276"></line>
+    <!-- feeder table (right) and stack table (left), raised off the floor -->
+    <g class="ra-table">
+      <rect x="262" y="232" width="52" height="7" rx="2"></rect>
+      <line x1="270" y1="239" x2="270" y2="276"></line>
+      <line x1="306" y1="239" x2="306" y2="276"></line>
+    </g>
+    <g class="ra-table">
+      <rect x="46" y="232" width="58" height="7" rx="2"></rect>
+      <line x1="54" y1="239" x2="54" y2="276"></line>
+      <line x1="96" y1="239" x2="96" y2="276"></line>
+    </g>
 
-    <!-- payload blocks (positioned by the script) -->
+    <!-- payload blocks -->
     <g data-blocks>
       <rect class="ra-block" data-block x="0" y="0" width="26" height="15" rx="2" style="opacity:0"></rect>
       <rect class="ra-block" data-block x="0" y="0" width="26" height="15" rx="2" style="opacity:0"></rect>
@@ -28,45 +36,40 @@ const VH = 300;
       <rect class="ra-block ra-block--hot" data-block x="0" y="0" width="26" height="15" rx="2" style="opacity:0"></rect>
     </g>
 
-    <!-- arm: base pivot (180,256) -->
-    <polygon class="ra-base" points="158,272 202,272 194,250 166,250"></polygon>
-    <g class="ra-shoulder" data-shoulder transform="rotate(8 180 256)">
-      <rect class="ra-link" x="174" y="162" width="12" height="96" rx="6"></rect>
+    <!-- arm: base pivot (180,256), elbow rest (180,172), wrist rest (180,94) -->
+    <polygon class="ra-base" points="160,276 200,276 192,252 168,252"></polygon>
+    <g class="ra-shoulder" data-shoulder transform="rotate(0 180 256)">
+      <rect class="ra-link" x="174" y="172" width="12" height="84" rx="6"></rect>
       <circle class="ra-joint" cx="180" cy="256" r="7"></circle>
-      <g class="ra-elbow" data-elbow transform="rotate(-16 180 162)">
-        <rect class="ra-link" x="175" y="66" width="10" height="98" rx="5"></rect>
-        <circle class="ra-joint" cx="180" cy="162" r="6"></circle>
-        <g class="ra-gripper" data-gripper>
-          <line class="ra-prong" x1="171" y1="78" x2="171" y2="62"></line>
-          <line class="ra-prong" x1="189" y1="78" x2="189" y2="62"></line>
-          <line class="ra-knuckle" x1="171" y1="78" x2="189" y2="78"></line>
-        </g>
+      <g class="ra-elbow" data-elbow transform="rotate(0 180 172)">
+        <rect class="ra-link" x="175" y="94" width="10" height="78" rx="5"></rect>
+        <circle class="ra-joint" cx="180" cy="172" r="6"></circle>
       </g>
+    </g>
+
+    <!-- wrist + hand: separate, always vertical (the 3rd DOF), placed at the IK wrist point -->
+    <g class="ra-hand" data-hand transform="translate(180 94)">
+      <circle class="ra-joint" cx="0" cy="0" r="5"></circle>
+      <line class="ra-prong" x1="-8" y1="2" x2="-8" y2="18"></line>
+      <line class="ra-prong" x1="8" y1="2" x2="8" y2="18"></line>
+      <line class="ra-knuckle" x1="-8" y1="2" x2="8" y2="2"></line>
     </g>
   </svg>
 </div>
 
 <style>
-  .ra {
-    width: 100%;
-    max-width: 360px;
-    margin-inline: auto;
-    filter: drop-shadow(0 0 24px rgba(230, 57, 70, 0.07));
-  }
+  .ra { width: 100%; max-width: 360px; margin-inline: auto; filter: drop-shadow(0 0 24px rgba(230, 57, 70, 0.07)); }
   .ra-svg { width: 100%; height: auto; overflow: visible; }
 
   .ra-ground { stroke: var(--c-hairline-strong); stroke-width: 1.5; stroke-dasharray: 4 6; }
-  .ra-pad { fill: var(--c-bg-elev); stroke: var(--c-text-faint); stroke-width: 1.5; }
+  .ra-table rect { fill: var(--c-bg-elev); stroke: var(--c-text-faint); stroke-width: 1.5; }
+  .ra-table line { stroke: var(--c-hairline); stroke-width: 1.5; }
   .ra-base { fill: var(--c-bg-elev); stroke: var(--c-text-faint); stroke-width: 1.5; }
   .ra-link { fill: var(--c-bg-elev-2); stroke: var(--c-text-muted); stroke-width: 1.5; }
   .ra-joint { fill: var(--c-bg); stroke: var(--c-text-faint); stroke-width: 1.5; }
   .ra-prong, .ra-knuckle { stroke: var(--c-accent); stroke-width: 3; stroke-linecap: round; }
 
-  .ra-block {
-    fill: var(--c-bg-elev-2);
-    stroke: var(--c-text-muted);
-    stroke-width: 1.5;
-  }
+  .ra-block { fill: var(--c-bg-elev-2); stroke: var(--c-text-muted); stroke-width: 1.5; }
   .ra-block--hot { stroke: var(--c-accent); fill: var(--c-accent-dim); }
 </style>
 

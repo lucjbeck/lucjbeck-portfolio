@@ -62,7 +62,8 @@ import SiteFooter from "../components/SiteFooter.astro";
     </Section>
 
     <Section id="research" eyebrow="03" heading="Research" rule>
-      <figure class="section-figure" data-reveal>
+      <div class="research-split">
+      <figure class="section-figure research-split__fig" data-reveal>
         <NanoSwitch />
         <figcaption>
           <span aria-hidden="true">FIG. 02</span>
@@ -72,6 +73,7 @@ import SiteFooter from "../components/SiteFooter.astro";
         </figcaption>
       </figure>
 
+      <div class="research-split__text">
       <ResearchEntry
         tag="SPEC-01"
         title="DNA Nanoswitches for Drug Discovery"
@@ -115,6 +117,8 @@ import SiteFooter from "../components/SiteFooter.astro";
           </Publication>
         </Fragment>
       </ResearchEntry>
+      </div>
+      </div>
     </Section>
 
     <Section id="experience" eyebrow="04" heading="Experience" rule>
@@ -212,6 +216,24 @@ import SiteFooter from "../components/SiteFooter.astro";
   }
   .section-figure figcaption span {
     color: var(--c-accent);
+  }
+
+  /* Nanoswitch figure side-by-side with the research text. */
+  .research-split {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    gap: clamp(var(--space-5), 3vw, var(--space-8));
+    align-items: start;
+  }
+  .research-split__fig {
+    margin: 0;
+    position: sticky;
+    top: 92px;
+  }
+  .research-split__text { min-width: 0; }
+  @media (max-width: 900px) {
+    .research-split { grid-template-columns: 1fr; }
+    .research-split__fig { position: static; }
   }
 
   .research-abstract {
