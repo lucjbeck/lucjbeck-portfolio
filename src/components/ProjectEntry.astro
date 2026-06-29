@@ -50,7 +50,7 @@ const { tag, title, specs } = Astro.props;
             ]}
           >
             {spec.href ? (
-              <a href={spec.href}>{spec.value}</a>
+              <a href={spec.href} target="_blank" rel="noopener noreferrer">{spec.value}</a>
             ) : (
               spec.value
             )}
