@@ -129,12 +129,15 @@ const links = [
 
   /* hamburger toggle — hidden on desktop, shown at the mobile breakpoint */
   .nav__toggle {
-    display: none;
+    display: none;          /* shown at the mobile breakpoint */
+    align-self: center;     /* vertically centre the button in the tall bar */
     flex-direction: column;
-    justify-content: center;
+    align-items: center;    /* centre the bars horizontally */
+    justify-content: center;/* centre the bars vertically */
     gap: 5px;
     width: 44px;
     height: 44px;
+    flex: 0 0 auto;
     padding: 0;
     background: none;
     border: 1px solid var(--c-hairline-strong);
@@ -142,9 +145,9 @@ const links = [
     cursor: pointer;
   }
   .nav__toggle-bar {
+    display: block;
     width: 20px;
     height: 2px;
-    margin-inline: auto;
     background: var(--c-text);
     transition: transform var(--dur-fast) var(--ease-out),
       opacity var(--dur-fast) var(--ease-out);

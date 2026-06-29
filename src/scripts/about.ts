@@ -343,30 +343,55 @@ export function initAboutAssembly(): void {
     }
   }
 
-  // ── Start on scroll ───────────────────────────────────────────────────
-  const io = new IntersectionObserver((entries) => {
-    for (const e of entries) {
-      if (!e.isIntersecting) continue;
-      io.disconnect();
-
-      const states: ArmState[] = BASE.map((cfg, ai) => ({
-        arm: makeArm(armGs[ai], cfg),
-        phase: "reach" as Phase,
-        idx: 0,
-        carry: null,
-        target: startPos.get(queues[ai][0])!,
-        queue: queues[ai],
-        done: queues[ai].length === 0,
-      }));
-
-      const animate = () => {
-        tickArm(states[0]);
-        tickArm(states[1]);
-        if (!states[0].done || !states[1].done) requestAnimationFrame(animate);
-      };
-      requestAnimationFrame(animate);
-      break;
+  // ── Run: assemble → hold → re-scatter → repeat. Loops so the animation is
+  // always visibly alive (on mobile the hero is on-screen at load, so a one-shot
+  // would look "frozen" by the time you focus). Pauses while off-screen. ──────
+  const scatterAll = () => {
+    for (const p of allPieces) {
+      const s = startPos.get(p)!;
+      p.el.setAttribute("transform", `translate(${s.x} ${s.y})`);
     }
+  };
+
+  let states: ArmState[] = [];
+  const resetStates = () => {
+    scatterAll();
+    states = BASE.map((cfg, ai) => ({
+      // reuse the arm across cycles so it continues smoothly from its park pose
+      arm: states[ai]?.arm ?? makeArm(armGs[ai], cfg),
+      phase: "reach" as Phase,
+      idx: 0,
+      carry: null,
+      target: startPos.get(queues[ai][0]) ?? { x: cfg.bx, y: cfg.by },
+      queue: queues[ai],
+      done: queues[ai].length === 0,
+    }));
+    states.forEach((st) => st.arm.grip.classList.remove("is-gripping"));
+  };
+
+  const REPLAY_HOLD = 2800;   // ms to admire the finished crest before replay
+  let doneAt = 0;
+  let running = false;
+  let visible = false;
+
+  const loop = () => {
+    if (!visible) { running = false; return; }   // pause off-screen (battery)
+    tickArm(states[0]);
+    tickArm(states[1]);
+    if (states[0].done && states[1].done) {
+      if (doneAt === 0) doneAt = performance.now();
+      else if (performance.now() - doneAt > REPLAY_HOLD) { resetStates(); doneAt = 0; }
+    }
+    requestAnimationFrame(loop);
+  };
+  const ensureRunning = () => {
+    if (!running) { running = true; requestAnimationFrame(loop); }
+  };
+
+  resetStates();
+  const io = new IntersectionObserver((entries) => {
+    visible = entries.some((e) => e.isIntersecting);
+    if (visible) ensureRunning();
   }, { rootMargin: "0px 0px -15% 0px" });
   io.observe(root);
 }
