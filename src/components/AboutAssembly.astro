@@ -76,9 +76,13 @@ const ticks = Array.from({ length: 9 }, (_, i) => 60 + i * 60);
     width: 100%;
     max-width: 500px;
     margin-inline: auto;
-    filter: drop-shadow(0 0 26px rgba(230, 57, 70, 0.06));
+    /* subtle red glow as a box-shadow (a `filter` would clip arms that swing
+       past the panel edge to its filter region). */
+    box-shadow: 0 0 26px rgba(230, 57, 70, 0.06);
   }
-  .ab-svg { width: 100%; height: auto; display: block; }
+  /* Let the arms paint past the panel edge instead of being clipped to the
+     viewBox — they ride over the dark page background and stay visible. */
+  .ab-svg { width: 100%; height: auto; display: block; overflow: visible; }
   .ab-surface { fill: var(--c-bg-elev); stroke: var(--c-hairline-strong); stroke-width: 1.5; }
   .ab-grid line { stroke: var(--c-hairline); stroke-width: 1; }
 
