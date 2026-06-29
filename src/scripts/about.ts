@@ -82,7 +82,13 @@ export function initAboutAssembly(): void {
   // ---- order (shield top-rows first, then letters) + assign by side ----
   const all = [...pieces].sort((a, b) => a.ty - b.ty).concat(letterPieces);
   const queues: Piece[][] = [[], []];
-  for (const p of all) queues[p.tx < 300 ? 0 : 1].push(p);
+  // left handles left targets, right handles right; centre-column pieces go to
+  // whichever queue is smaller, so both cranes finish at about the same time.
+  for (const p of all) {
+    if (p.tx < 300) queues[0].push(p);
+    else if (p.tx > 300) queues[1].push(p);
+    else queues[queues[0].length <= queues[1].length ? 0 : 1].push(p);
+  }
 
   // ---- deterministic scattered starts in each side's lower bin ----
   const start = new Map<Piece, { x: number; y: number }>();
@@ -141,9 +147,7 @@ export function initAboutAssembly(): void {
       cr.grip.classList.add("is-gripping");
       cr.setCarry(p);
       await new Promise((r) => setTimeout(r, 80));
-      await cr.springTo(s.x, LIFT_Y, 0.22, 0.6); // hoist up
-      await cr.springTo(p.tx, LIFT_Y, 0.18, 0.62); // traverse
-      await cr.springTo(p.tx, p.ty, 0.22, 0.55);   // hoist down onto target
+      await cr.springTo(p.tx, p.ty, 0.2, 0.55); // straight to its place (carriage + hoist together)
       cr.setCarry(null);
       lock(p);
       cr.grip.classList.remove("is-gripping");
