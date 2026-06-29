@@ -49,10 +49,12 @@ const PRODUCTS: Spec[][] = [
     { t: "circ", r: 8, dx: 22, dy: -6 },
     { t: "circ", r: 3, dx: 0, dy: -4, hot: true },
   ],
-  [ // walker robot (legs)
+  [ // walker robot (legs, arms, face)
     { t: "rect", w: 7, h: 16, dx: -8, dy: 0 },
     { t: "rect", w: 7, h: 16, dx: 8, dy: 0 },
     { t: "rect", w: 26, h: 20, dx: 0, dy: -18 },
+    { t: "rect", w: 5, h: 16, dx: -16, dy: -16 },
+    { t: "rect", w: 5, h: 16, dx: 16, dy: -16 },
     { t: "head", w: 18, h: 14, dx: 0, dy: -37 },
   ],
 ];
