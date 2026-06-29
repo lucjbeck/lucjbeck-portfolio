@@ -38,10 +38,10 @@
      Three roles (brief), no Inter. Self-hosted woff2, font-display: swap.
        Display: Cabinet Grotesk  (characterful grotesque, used large)
        Body:    Hanken Grotesk   (clean modern sans)
-       Mono:    JetBrains Mono   (data texture: figure numbers, labels, code) */
+       Label:   System sans      (labels/eyebrows/captions/nav — easy to read) */
   --font-display: "Cabinet Grotesk", "Hanken Grotesk", system-ui, sans-serif;
   --font-body:    "Hanken Grotesk", system-ui, -apple-system, sans-serif;
-  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-mono:    system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
   /* Fluid type scale (clamp: min @360px ... max @1440px). Display set tight,
      echoing wodniack's 0.8–1.0 leading. */
