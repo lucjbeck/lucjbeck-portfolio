@@ -62,13 +62,14 @@ const outRollers = [356, 436, 516];
         <g class="eng-el" data-arm-el transform="rotate(0 300 162)">
           <rect class="eng-link" x="295" y="162" width="10" height="104" rx="5"></rect>
           <circle class="eng-joint" cx="300" cy="162" r="5"></circle>
-          <g class="eng-grip" data-arm-grip>
-            <line class="eng-prong" x1="292" y1="266" x2="292" y2="280"></line>
-            <line class="eng-prong" x1="308" y1="266" x2="308" y2="280"></line>
-            <line class="eng-knuckle" x1="292" y1="266" x2="308" y2="266"></line>
-          </g>
         </g>
       </g>
+    </g>
+
+    <!-- suction end-effector: separate group kept upright, descends onto parts -->
+    <g class="eng-hand" data-arm-hand transform="translate(300 251)">
+      <rect class="eng-headmount" x="-11" y="-3" width="22" height="6" rx="1"></rect>
+      <path class="eng-pad" d="M-8,3 L8,3 L5,12 L-5,12 Z"></path>
     </g>
   </svg>
 </div>
@@ -90,7 +91,8 @@ const outRollers = [356, 436, 516];
   .eng-cart { fill: var(--c-bg-elev-2); stroke: var(--c-text-faint); stroke-width: 1.5; }
   .eng-link { fill: var(--c-bg-elev-2); stroke: var(--c-text-muted); stroke-width: 1.5; }
   .eng-joint { fill: var(--c-bg); stroke: var(--c-text-faint); stroke-width: 1.5; }
-  .eng-prong, .eng-knuckle { stroke: var(--c-accent); stroke-width: 3; stroke-linecap: round; }
+  .eng-headmount { fill: var(--c-bg-elev-2); stroke: var(--c-text-muted); stroke-width: 1.5; }
+  .eng-pad { fill: var(--c-accent-dim); stroke: var(--c-accent); stroke-width: 1.5; }
 
   :global(.eng-part) { fill: var(--c-bg-elev-2); stroke: var(--c-text-muted); stroke-width: 1.5; }
   :global(.eng-part-hot) { fill: var(--c-accent-dim); stroke: var(--c-accent); stroke-width: 1.5; }
