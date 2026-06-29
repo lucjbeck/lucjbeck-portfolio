@@ -19,25 +19,29 @@ const PIV = { x: 300, y: 54 };
 const ELBOW0 = { x: 300, y: 162 };
 const L1 = 108, L2 = 104;
 const RAIL_MIN = 190, RAIL_MAX = 320;
-const BELT = 262;                 // part centre line on a belt
+const BELT_SURFACE = 276;         // top of the belt rect (parts rest here)
+const BELT = 269;                 // part centre line riding on the belt
 const PICK = { x: 206, y: BELT }; // end of the input belt
-const STATION_TOP = 250;          // top surface of the central station
+const STATION_TOP = 248;          // top surface of the central station
 const PLAT_X = 300;
 const GRAB_DY = 15;               // wrist sits this far above the held part's centre
 
 type Spec =
   | { t: "rect"; w: number; h: number; dx: number; dy: number; hot?: boolean }
-  | { t: "circ"; r: number; dx: number; dy: number; hot?: boolean };
+  | { t: "circ"; r: number; dx: number; dy: number; hot?: boolean }
+  | { t: "head"; w: number; h: number; dx: number; dy: number }
+  | { t: "minarm"; dx: number; dy: number };
 
-const half = (s: Spec) => (s.t === "rect" ? s.h / 2 : s.r);
+const half = (s: Spec) => (s.t === "circ" ? s.r : s.t === "minarm" ? 0 : s.h / 2);
 
 // three products, ~4 parts each (minimal), built bottom-up
 const PRODUCTS: Spec[][] = [
-  [ // rover
+  [ // rover with a mini robot arm on top
     { t: "circ", r: 7, dx: -15, dy: 0 },
     { t: "circ", r: 7, dx: 15, dy: 0 },
     { t: "rect", w: 48, h: 12, dx: 0, dy: -8 },
     { t: "rect", w: 28, h: 16, dx: 0, dy: -24 },
+    { t: "minarm", dx: 4, dy: -32 },
   ],
   [ // drone
     { t: "rect", w: 34, h: 10, dx: 0, dy: 0 },
@@ -45,13 +49,16 @@ const PRODUCTS: Spec[][] = [
     { t: "circ", r: 8, dx: 22, dy: -6 },
     { t: "circ", r: 3, dx: 0, dy: -4, hot: true },
   ],
-  [ // robot
-    { t: "rect", w: 24, h: 8, dx: 0, dy: 0 },
-    { t: "rect", w: 26, h: 22, dx: 0, dy: -16 },
-    { t: "rect", w: 16, h: 12, dx: 0, dy: -34 },
-    { t: "circ", r: 3, dx: 0, dy: -36, hot: true },
+  [ // walker robot (legs)
+    { t: "rect", w: 7, h: 16, dx: -8, dy: 0 },
+    { t: "rect", w: 7, h: 16, dx: 8, dy: 0 },
+    { t: "rect", w: 26, h: 20, dx: 0, dy: -18 },
+    { t: "head", w: 18, h: 14, dx: 0, dy: -37 },
   ],
 ];
+
+// how each finished unit leaves: rover rolls, drone flies, robot walks
+const EXITS = ["roll", "fly", "walk"] as const;
 
 export function initEngineering(): void {
   if (typeof window === "undefined") return;
@@ -91,17 +98,30 @@ export function initEngineering(): void {
     let lowest = -Infinity;
     for (const s of specs) lowest = Math.max(lowest, s.dy + half(s));
     yShift = STATION_TOP - lowest;
+    const mkRect = (w: number, h: number, cls: string) => { const r = document.createElementNS(SVGNS, "rect"); r.setAttribute("x", String(-w / 2)); r.setAttribute("y", String(-h / 2)); r.setAttribute("width", String(w)); r.setAttribute("height", String(h)); r.setAttribute("rx", "2"); r.setAttribute("class", cls); return r; };
+    const mkCirc = (cx: number, cy: number, r: number, cls: string) => { const c = document.createElementNS(SVGNS, "circle"); c.setAttribute("cx", String(cx)); c.setAttribute("cy", String(cy)); c.setAttribute("r", String(r)); c.setAttribute("class", cls); return c; };
+    const mkLine = (x1: number, y1: number, x2: number, y2: number, cls: string) => { const l = document.createElementNS(SVGNS, "line"); l.setAttribute("x1", String(x1)); l.setAttribute("y1", String(y1)); l.setAttribute("x2", String(x2)); l.setAttribute("y2", String(y2)); l.setAttribute("class", cls); return l; };
     for (const sp of specs) {
       let el: SVGGraphicsElement;
       if (sp.t === "rect") {
-        el = document.createElementNS(SVGNS, "rect");
-        el.setAttribute("x", String(-sp.w / 2)); el.setAttribute("y", String(-sp.h / 2));
-        el.setAttribute("width", String(sp.w)); el.setAttribute("height", String(sp.h)); el.setAttribute("rx", "2");
-      } else {
-        el = document.createElementNS(SVGNS, "circle");
-        el.setAttribute("r", String(sp.r));
+        el = mkRect(sp.w, sp.h, sp.hot ? "eng-part-hot" : "eng-part");
+      } else if (sp.t === "circ") {
+        el = mkCirc(0, 0, sp.r, sp.hot ? "eng-part-hot" : "eng-part");
+      } else if (sp.t === "head") {
+        el = document.createElementNS(SVGNS, "g");
+        el.appendChild(mkRect(sp.w, sp.h, "eng-part"));
+        el.appendChild(mkCirc(-sp.w / 4, -sp.h / 8, 1.8, "eng-eye"));
+        el.appendChild(mkCirc(sp.w / 4, -sp.h / 8, 1.8, "eng-eye"));
+      } else { // minarm: a small 2-joint arm with a gripper, mounted at the origin
+        el = document.createElementNS(SVGNS, "g");
+        el.appendChild(mkRect(10, 4, "eng-part"));
+        el.appendChild(mkLine(0, -2, -8, -13, "eng-mini"));
+        el.appendChild(mkCirc(-8, -13, 2, "eng-mini-joint"));
+        el.appendChild(mkLine(-8, -13, 3, -21, "eng-mini"));
+        el.appendChild(mkLine(0, -21, 0, -27, "eng-mini-grip"));
+        el.appendChild(mkLine(6, -21, 6, -27, "eng-mini-grip"));
+        el.appendChild(mkLine(0, -21, 6, -21, "eng-mini-grip"));
       }
-      el.setAttribute("class", sp.hot ? "eng-part-hot" : "eng-part");
       el.style.opacity = "0";
       layer!.appendChild(el);
       els.push(el); pos.push({ x: 0, y: 0, vis: 0 }); asm.push({ x: 0, y: 0 });
@@ -139,14 +159,25 @@ export function initEngineering(): void {
       if (near(s.x, s.y)) { phase = "release"; pT = 0; }
     } else if (phase === "release") {
       const s = slotOf(step); pos[step].x = s.x; pos[step].y = s.y; asm[step] = { x: s.x, y: s.y };
-      if (pT > 220) { carry = -1; step++; phase = step < specs.length ? "feed" : "eject"; pT = 0; ex = 0; drop = 0; }
+      if (pT > 220) { carry = -1; step++; phase = step < specs.length ? "feed" : "done"; pT = 0; }
+    } else if (phase === "done") {
+      goal(REST_CX, 150);                            // hold so the finished unit is seen
+      if (pT > 850) { phase = "eject"; pT = 0; ex = 0; drop = 0; }
     } else if (phase === "eject") {
-      // finished product settles onto the OUTPUT belt and rolls right, off-screen
+      // the finished unit leaves under its own locomotion
       goal(REST_CX, 150);
-      drop = Math.min(BELT - STATION_TOP, drop + dt * 0.04);
-      ex += 4.6;
+      const mode = EXITS[prod];
       let off = true;
-      for (let i = 0; i < asm.length; i++) { pos[i].x = asm[i].x + ex; pos[i].y = asm[i].y + drop; if (pos[i].x < 610) off = false; }
+      if (mode === "fly") {
+        ex += 2.2; drop -= dt * 0.16;                 // rotors lift it up and away
+        for (let i = 0; i < asm.length; i++) { pos[i].x = asm[i].x + ex; pos[i].y = asm[i].y + drop; if (pos[i].x < 610 && pos[i].y > -55) off = false; }
+      } else {
+        drop = Math.min(BELT_SURFACE - STATION_TOP, drop + dt * 0.06); // settle onto the belt first
+        const settled = drop >= BELT_SURFACE - STATION_TOP - 0.5;
+        if (settled) ex += mode === "walk" ? 2.2 : 2.9;
+        const bob = mode === "walk" && settled ? -Math.abs(Math.sin(ex * 0.18)) * 3 : 0; // footsteps
+        for (let i = 0; i < asm.length; i++) { pos[i].x = asm[i].x + ex; pos[i].y = asm[i].y + drop + bob; if (pos[i].x < 610) off = false; }
+      }
       if (off) { prod = (prod + 1) % PRODUCTS.length; build(); step = 0; phase = "feed"; pT = 0; }
     }
 
