@@ -44,13 +44,13 @@ import EngineeringHero from "./EngineeringHero.astro";
 
 <style>
   .hero {
-    /* fill the viewport BELOW the sticky nav so the content centers in the
-       visible area instead of overflowing under the fold (was bottom-heavy). */
-    min-height: calc(100svh - 58px);
+    /* sized to the content with comfortable breathing room (not a full empty
+       viewport), so the next section peeks in and there is far less dead space. */
+    min-height: clamp(480px, 72svh, 760px);
     display: flex;
     align-items: center;
     border-bottom: var(--border);
-    padding-block: clamp(var(--space-5), 4vh, var(--space-7));
+    padding-block: clamp(var(--space-4), 3.5vh, var(--space-6));
   }
 
   .hero :global(.hero__inner) {
@@ -66,7 +66,7 @@ import EngineeringHero from "./EngineeringHero.astro";
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-3);
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-2);
     color: var(--c-text-faint);
     font-family: var(--font-mono);
     font-size: var(--fs-mono-label);

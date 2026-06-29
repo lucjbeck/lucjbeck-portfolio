@@ -13,8 +13,7 @@ const VW = 560;
 const VH = 320;
 const RAIL_Y = 40;
 const BELT_Y = 276;
-const inRollers = [44, 124, 204];
-const outRollers = [356, 436, 516];
+const rollers = [60, 165, 300, 435, 510];
 ---
 
 <div id="eng-hero" class="eng" role="img" aria-label="Assembly cell: raw parts arrive on an input conveyor at left, an arm assembles a product on a central station, and the finished unit leaves on the output conveyor at right">
@@ -23,29 +22,19 @@ const outRollers = [356, 436, 516];
     <line class="eng-rail" x1="20" y1={RAIL_Y} x2={VW - 20} y2={RAIL_Y}></line>
     <line class="eng-rail-2" x1="20" y1={RAIL_Y + 4} x2={VW - 20} y2={RAIL_Y + 4}></line>
 
-    <!-- input belt (left) -->
-    <rect class="eng-belt" x="8" y={BELT_Y} width="228" height="10" rx="5"></rect>
-    {inRollers.map((rx) => (
+    <!-- one continuous conveyor belt -->
+    <rect class="eng-belt" x="16" y={BELT_Y} width={VW - 32} height="10" rx="5"></rect>
+    {rollers.map((rx) => (
       <g class="eng-roller" data-roller transform={`rotate(0 ${rx} ${BELT_Y + 16})`}>
         <circle cx={rx} cy={BELT_Y + 16} r="14" /><line x1={rx} y1={BELT_Y + 2} x2={rx} y2={BELT_Y + 30} /><line x1={rx - 14} y1={BELT_Y + 16} x2={rx + 14} y2={BELT_Y + 16} />
       </g>
     ))}
-    <text class="eng-tag" x="12" y={BELT_Y + 44}>IN</text>
 
-    <!-- output belt (right) -->
-    <rect class="eng-belt" x="324" y={BELT_Y} width="228" height="10" rx="5"></rect>
-    {outRollers.map((rx) => (
-      <g class="eng-roller" data-roller transform={`rotate(0 ${rx} ${BELT_Y + 16})`}>
-        <circle cx={rx} cy={BELT_Y + 16} r="14" /><line x1={rx} y1={BELT_Y + 2} x2={rx} y2={BELT_Y + 30} /><line x1={rx - 14} y1={BELT_Y + 16} x2={rx + 14} y2={BELT_Y + 16} />
-      </g>
-    ))}
-    <text class="eng-tag" x={VW - 36} y={BELT_Y + 44}>OUT</text>
-
-    <!-- central assembly station -->
+    <!-- central assembly table, hung from the ceiling by cables -->
     <g class="eng-stand">
-      <rect x="272" y="250" width="56" height="6" rx="2"></rect>
-      <line x1="282" y1="256" x2="282" y2="276"></line>
-      <line x1="318" y1="256" x2="318" y2="276"></line>
+      <line class="eng-string" x1="284" y1="44" x2="285" y2="200"></line>
+      <line class="eng-string" x1="316" y1="44" x2="315" y2="200"></line>
+      <rect class="eng-stand-top" x="272" y="200" width="56" height="7" rx="2"></rect>
     </g>
 
     <!-- product parts (created dynamically by the script) -->
@@ -84,9 +73,8 @@ const outRollers = [356, 436, 516];
   .eng-roller circle { fill: none; stroke: var(--c-text-faint); stroke-width: 1.5; }
   .eng-roller line { stroke: var(--c-hairline-strong); stroke-width: 1.5; }
   .eng-roller-sm { fill: var(--c-bg); stroke: var(--c-text-faint); stroke-width: 1.5; }
-  .eng-stand rect { fill: var(--c-bg-elev); stroke: var(--c-text-faint); stroke-width: 1.5; }
-  .eng-stand line { stroke: var(--c-hairline); stroke-width: 1.5; }
-  .eng-tag { fill: var(--c-text-faint); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; }
+  .eng-string { stroke: var(--c-hairline-strong); stroke-width: 1; }
+  .eng-stand-top { fill: var(--c-bg-elev-2); stroke: var(--c-text-faint); stroke-width: 1.5; }
 
   .eng-cart { fill: var(--c-bg-elev-2); stroke: var(--c-text-faint); stroke-width: 1.5; }
   .eng-link { fill: var(--c-bg-elev-2); stroke: var(--c-text-muted); stroke-width: 1.5; }

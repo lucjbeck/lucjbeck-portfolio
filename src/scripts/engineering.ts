@@ -18,21 +18,22 @@ const REST_CX = 300;
 const PIV = { x: 300, y: 54 };
 const ELBOW0 = { x: 300, y: 162 };
 const L1 = 108, L2 = 104;
-const RAIL_MIN = 190, RAIL_MAX = 320;
-const BELT_SURFACE = 276;         // top of the belt rect (parts rest here)
-const BELT = 269;                 // part centre line riding on the belt
-const PICK = { x: 206, y: BELT }; // end of the input belt
-const STATION_TOP = 248;          // top surface of the central station
-const PLAT_X = 300;
+const RAIL_MIN = 150, RAIL_MAX = 320;
+const BELT_SURFACE = 274;         // where a finished unit's base rests on the belt
+const BELT = 260;                 // part centre line riding on the belt
+const PICK = { x: 150, y: BELT }; // raw parts are picked here, on the belt
+const STATION_TOP = 200;          // raised central pedestal top (assembly happens up high)
+const PLAT_X = 300;               // pedestal centre
 const GRAB_DY = 15;               // wrist sits this far above the held part's centre
 
 type Spec =
   | { t: "rect"; w: number; h: number; dx: number; dy: number; hot?: boolean }
   | { t: "circ"; r: number; dx: number; dy: number; hot?: boolean }
   | { t: "head"; w: number; h: number; dx: number; dy: number }
-  | { t: "minarm"; dx: number; dy: number };
+  | { t: "minarm"; dx: number; dy: number }
+  | { t: "eye"; dx: number; dy: number };
 
-const half = (s: Spec) => (s.t === "circ" ? s.r : s.t === "minarm" ? 0 : s.h / 2);
+const half = (s: Spec) => (s.t === "circ" ? s.r : s.t === "minarm" || s.t === "eye" ? 0 : s.h / 2);
 
 // three products, ~4 parts each (minimal), built bottom-up
 const PRODUCTS: Spec[][] = [
@@ -55,7 +56,9 @@ const PRODUCTS: Spec[][] = [
     { t: "rect", w: 26, h: 20, dx: 0, dy: -18 },
     { t: "rect", w: 5, h: 16, dx: -16, dy: -16 },
     { t: "rect", w: 5, h: 16, dx: 16, dy: -16 },
-    { t: "head", w: 18, h: 14, dx: 0, dy: -37 },
+    { t: "rect", w: 18, h: 14, dx: 0, dy: -37 },
+    { t: "eye", dx: -4, dy: -39 },
+    { t: "eye", dx: 4, dy: -39 },
   ],
 ];
 
@@ -114,7 +117,7 @@ export function initEngineering(): void {
         el.appendChild(mkRect(sp.w, sp.h, "eng-part"));
         el.appendChild(mkCirc(-sp.w / 4, -sp.h / 8, 1.8, "eng-eye"));
         el.appendChild(mkCirc(sp.w / 4, -sp.h / 8, 1.8, "eng-eye"));
-      } else { // minarm: a small 2-joint arm with a gripper, mounted at the origin
+      } else if (sp.t === "minarm") { // a small 2-joint arm with a gripper
         el = document.createElementNS(SVGNS, "g");
         el.appendChild(mkRect(10, 4, "eng-part"));
         el.appendChild(mkLine(0, -2, -8, -13, "eng-mini"));
@@ -123,6 +126,8 @@ export function initEngineering(): void {
         el.appendChild(mkLine(0, -21, 0, -27, "eng-mini-grip"));
         el.appendChild(mkLine(6, -21, 6, -27, "eng-mini-grip"));
         el.appendChild(mkLine(0, -21, 6, -21, "eng-mini-grip"));
+      } else { // eye (placed individually by the arm)
+        el = mkCirc(0, 0, 1.9, "eng-eye");
       }
       el.style.opacity = "0";
       layer!.appendChild(el);
@@ -163,18 +168,18 @@ export function initEngineering(): void {
       const s = slotOf(step); pos[step].x = s.x; pos[step].y = s.y; asm[step] = { x: s.x, y: s.y };
       if (pT > 220) { carry = -1; step++; phase = step < specs.length ? "feed" : "done"; pT = 0; }
     } else if (phase === "done") {
-      goal(REST_CX, 150);                            // hold so the finished unit is seen
+      goal(REST_CX, 120);                            // lift clear; show the finished unit
       if (pT > 850) { phase = "eject"; pT = 0; ex = 0; drop = 0; }
     } else if (phase === "eject") {
-      // the finished unit leaves under its own locomotion
-      goal(REST_CX, 150);
+      // the finished unit is lowered onto the belt (or flies) and leaves
+      goal(REST_CX, 120);
       const mode = EXITS[prod];
       let off = true;
       if (mode === "fly") {
         ex += 2.2; drop -= dt * 0.16;                 // rotors lift it up and away
         for (let i = 0; i < asm.length; i++) { pos[i].x = asm[i].x + ex; pos[i].y = asm[i].y + drop; if (pos[i].x < 610 && pos[i].y > -55) off = false; }
       } else {
-        drop = Math.min(BELT_SURFACE - STATION_TOP, drop + dt * 0.06); // settle onto the belt first
+        drop = Math.min(BELT_SURFACE - STATION_TOP, drop + dt * 0.09); // lower onto the belt first
         const settled = drop >= BELT_SURFACE - STATION_TOP - 0.5;
         if (settled) ex += mode === "walk" ? 2.2 : 2.9;
         const bob = mode === "walk" && settled ? -Math.abs(Math.sin(ex * 0.18)) * 3 : 0; // footsteps
