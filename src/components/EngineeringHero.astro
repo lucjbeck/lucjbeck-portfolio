@@ -1,11 +1,11 @@
 ---
 /**
- * EngineeringHero.astro — landing signature: an overhead gantry assembly line.
- * A carriage rides a ceiling rail (a prismatic DOF) and a two-link arm hangs from
- * it, so the whole thing obeys a real gantry kinematic and never reaches up from
- * the floor. It picks parts off a physics conveyor and assembles ONE OF THREE
- * products in rotation (rover, drone, robot); the finished unit rolls off and the
- * next is built. Driven by ../scripts/engineering.ts. SSR shows a static frame.
+ * EngineeringHero.astro — landing signature: a legible assembly cell.
+ * Flow reads left to right: raw parts ride the INPUT belt in from the left, a
+ * ceiling-slider arm picks them and assembles a product on the central station,
+ * and the finished unit leaves on the OUTPUT belt to the right. Parts never go
+ * back onto the belt they came from. Minimal, one accent. Driven by
+ * ../scripts/engineering.ts. SSR shows a static frame.
  *
  * Mount id: #eng-hero. Geometry mirrored in the script.
  */
@@ -13,51 +13,59 @@ const VW = 560;
 const VH = 320;
 const RAIL_Y = 40;
 const BELT_Y = 276;
-const rollers = [60, 180, 300, 420, 510];
+const inRollers = [44, 124, 204];
+const outRollers = [356, 436, 516];
 ---
 
-<div id="eng-hero" class="eng" role="img" aria-label="Overhead gantry assembly line: a ceiling-mounted arm picks parts off a conveyor and assembles a product, which rolls away">
+<div id="eng-hero" class="eng" role="img" aria-label="Assembly cell: raw parts arrive on an input conveyor at left, an arm assembles a product on a central station, and the finished unit leaves on the output conveyor at right">
   <svg class="eng-svg" viewBox={`0 0 ${VW} ${VH}`} fill="none" aria-hidden="true">
-    <!-- ceiling rail -->
+    <!-- ceiling rail (gantry slider) -->
     <line class="eng-rail" x1="20" y1={RAIL_Y} x2={VW - 20} y2={RAIL_Y}></line>
     <line class="eng-rail-2" x1="20" y1={RAIL_Y + 4} x2={VW - 20} y2={RAIL_Y + 4}></line>
 
-    <!-- conveyor + rollers -->
-    <rect class="eng-belt" x="16" y={BELT_Y} width={VW - 32} height="10" rx="5"></rect>
-    {rollers.map((rx) => (
+    <!-- input belt (left) -->
+    <rect class="eng-belt" x="8" y={BELT_Y} width="228" height="10" rx="5"></rect>
+    {inRollers.map((rx) => (
       <g class="eng-roller" data-roller transform={`rotate(0 ${rx} ${BELT_Y + 16})`}>
-        <circle cx={rx} cy={BELT_Y + 16} r="14" />
-        <line x1={rx} y1={BELT_Y + 2} x2={rx} y2={BELT_Y + 30} />
-        <line x1={rx - 14} y1={BELT_Y + 16} x2={rx + 14} y2={BELT_Y + 16} />
+        <circle cx={rx} cy={BELT_Y + 16} r="14" /><line x1={rx} y1={BELT_Y + 2} x2={rx} y2={BELT_Y + 30} /><line x1={rx - 14} y1={BELT_Y + 16} x2={rx + 14} y2={BELT_Y + 16} />
       </g>
     ))}
+    <text class="eng-tag" x="12" y={BELT_Y + 44}>IN</text>
 
-    <!-- ambient parts flowing on the belt (belt physics) -->
-    <g data-amb-layer>
-      {Array.from({ length: 6 }).map(() => (
-        <rect class="eng-amb" data-amb x="0" y="0" width="18" height="13" rx="2" style="opacity:0" />
-      ))}
+    <!-- output belt (right) -->
+    <rect class="eng-belt" x="324" y={BELT_Y} width="228" height="10" rx="5"></rect>
+    {outRollers.map((rx) => (
+      <g class="eng-roller" data-roller transform={`rotate(0 ${rx} ${BELT_Y + 16})`}>
+        <circle cx={rx} cy={BELT_Y + 16} r="14" /><line x1={rx} y1={BELT_Y + 2} x2={rx} y2={BELT_Y + 30} /><line x1={rx - 14} y1={BELT_Y + 16} x2={rx + 14} y2={BELT_Y + 16} />
+      </g>
+    ))}
+    <text class="eng-tag" x={VW - 36} y={BELT_Y + 44}>OUT</text>
+
+    <!-- central assembly station -->
+    <g class="eng-stand">
+      <rect x="272" y="250" width="56" height="6" rx="2"></rect>
+      <line x1="282" y1="256" x2="282" y2="276"></line>
+      <line x1="318" y1="256" x2="318" y2="276"></line>
     </g>
 
-    <!-- product parts created dynamically by the script -->
+    <!-- product parts (created dynamically by the script) -->
     <g data-parts></g>
 
-    <!-- gantry carriage on the rail (slides horizontally), arm hangs below.
-         Rest pivot x = 280; the script translates the carriage along the rail. -->
+    <!-- gantry carriage + hanging arm; rest pivot x = 300 -->
     <g class="eng-carriage" data-carriage transform="translate(0 0)">
-      <rect class="eng-cart" x="262" y="30" width="36" height="18" rx="3"></rect>
-      <circle class="eng-roller-sm" cx="270" cy="40" r="3"></circle>
+      <rect class="eng-cart" x="282" y="30" width="36" height="18" rx="3"></rect>
       <circle class="eng-roller-sm" cx="290" cy="40" r="3"></circle>
-      <g class="eng-sh" data-arm-sh transform="rotate(0 280 54)">
-        <rect class="eng-link" x="274" y="54" width="12" height="108" rx="6"></rect>
-        <circle class="eng-joint" cx="280" cy="54" r="6"></circle>
-        <g class="eng-el" data-arm-el transform="rotate(0 280 162)">
-          <rect class="eng-link" x="275" y="162" width="10" height="104" rx="5"></rect>
-          <circle class="eng-joint" cx="280" cy="162" r="5"></circle>
+      <circle class="eng-roller-sm" cx="310" cy="40" r="3"></circle>
+      <g class="eng-sh" data-arm-sh transform="rotate(0 300 54)">
+        <rect class="eng-link" x="294" y="54" width="12" height="108" rx="6"></rect>
+        <circle class="eng-joint" cx="300" cy="54" r="6"></circle>
+        <g class="eng-el" data-arm-el transform="rotate(0 300 162)">
+          <rect class="eng-link" x="295" y="162" width="10" height="104" rx="5"></rect>
+          <circle class="eng-joint" cx="300" cy="162" r="5"></circle>
           <g class="eng-grip" data-arm-grip>
-            <line class="eng-prong" x1="272" y1="266" x2="272" y2="280"></line>
-            <line class="eng-prong" x1="288" y1="266" x2="288" y2="280"></line>
-            <line class="eng-knuckle" x1="272" y1="266" x2="288" y2="266"></line>
+            <line class="eng-prong" x1="292" y1="266" x2="292" y2="280"></line>
+            <line class="eng-prong" x1="308" y1="266" x2="308" y2="280"></line>
+            <line class="eng-knuckle" x1="292" y1="266" x2="308" y2="266"></line>
           </g>
         </g>
       </g>
@@ -75,8 +83,9 @@ const rollers = [60, 180, 300, 420, 510];
   .eng-roller circle { fill: none; stroke: var(--c-text-faint); stroke-width: 1.5; }
   .eng-roller line { stroke: var(--c-hairline-strong); stroke-width: 1.5; }
   .eng-roller-sm { fill: var(--c-bg); stroke: var(--c-text-faint); stroke-width: 1.5; }
-
-  .eng-amb { fill: var(--c-bg-elev-2); stroke: var(--c-hairline-strong); stroke-width: 1; }
+  .eng-stand rect { fill: var(--c-bg-elev); stroke: var(--c-text-faint); stroke-width: 1.5; }
+  .eng-stand line { stroke: var(--c-hairline); stroke-width: 1.5; }
+  .eng-tag { fill: var(--c-text-faint); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; }
 
   .eng-cart { fill: var(--c-bg-elev-2); stroke: var(--c-text-faint); stroke-width: 1.5; }
   .eng-link { fill: var(--c-bg-elev-2); stroke: var(--c-text-muted); stroke-width: 1.5; }
