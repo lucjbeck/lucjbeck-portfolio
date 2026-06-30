@@ -1,26 +1,31 @@
 # Luc Beck — Portfolio
 
-Personal site. Biophysics research (DNA nanoswitches) and EE/AI engineering, built as a work sample.
+**🔗 Live at [www.lucbeck.com](https://www.lucbeck.com)**
 
-Concept: **"Specimen / Instrument."** Dark instrument-grade UI, one luminous accent, a monospace data texture, catalog numbering as the structural spine, and a signature anime.js hero: a stylized DNA nanoswitch that assembles, then morphs between open and closed conformations on hover, scroll, or click.
+My personal site and a deliberate work sample: a single, long, instrument-grade page covering my biophysics research (DNA nanoswitches) and my EE/AI engineering work.
+
+## Concept — "Specimen / Instrument"
+
+The site is designed to look and feel like a piece of scientific instrumentation rather than a typical résumé page:
+
+- A dark, instrument-grade UI with a single luminous accent color.
+- A monospace "data texture" and catalog numbering used as the structural spine of the page.
+- A signature animated hero: a stylized **DNA nanoswitch** that assembles on load, then morphs between its open and closed conformations on hover, scroll, or click — a literal nod to the research it represents.
+- Restraint throughout: one typographic voice for display, one for body, one for data; no decorative noise.
+
+## What's built
+
+A static, single-page portfolio composed of focused sections — hero, about, education, research, publications, projects, and roles — each rendered from its own component and tied together by the catalog-number system. The animation work (the conformational nanoswitch, scroll-reveal, and spring micro-interactions) is hand-built on anime.js and loaded only where it's needed, so the page ships almost no JavaScript.
+
+Accessibility and quality were treated as a floor, not an afterthought: semantic HTML, a single `<h1>` per page, visible `:focus-visible` states, a skip link, WCAG AA contrast, responsive layout down to 360px, and full `prefers-reduced-motion` support that resolves the hero to its static state and disables reveals.
 
 ## Stack
 
-- **Astro** (static output, TypeScript) — ships almost no JS.
-- **anime.js v4** — the hero conformational switch, scroll-reveal, and spring micro-interactions. Loaded only where needed.
+- **[Astro](https://astro.build)** (static output, TypeScript) — ships almost no JS.
+- **[anime.js](https://animejs.com) v4** — the hero conformational switch, scroll-reveal, and spring micro-interactions, loaded only where needed.
 - **Hand-rolled CSS** with design tokens as CSS variables (`src/styles/tokens.css`). No Tailwind.
-- **Self-hosted fonts** (woff2, `font-display: swap`): Cabinet Grotesk (display), Hanken Grotesk (body), JetBrains Mono (data texture). No Inter.
-
-## Develop
-
-```bash
-npm install
-npm run dev        # http://localhost:4321
-npm run build      # static output to dist/
-npm run preview    # serve the production build locally
-```
-
-Node 18+ (developed on Node 22).
+- **Self-hosted fonts** (woff2, `font-display: swap`): Cabinet Grotesk (display), Hanken Grotesk (body), JetBrains Mono (data texture).
+- Deployed on **Vercel** with the `lucbeck.com` custom domain.
 
 ## Project shape
 
@@ -36,41 +41,13 @@ public/fonts/    self-hosted woff2
 design/          design tokens source, /taste analyses, build plan, agent notes
 ```
 
-Accessibility / quality floor: semantic HTML, one `<h1>` per page, visible `:focus-visible`, skip link, WCAG AA contrast, `prefers-reduced-motion` resolves the hero to its static state and disables reveals, responsive from 360px.
-
-## Deploy — Vercel (primary)
-
-Vercel auto-detects Astro; no adapter is needed for static output.
-
-1. Push this repo to GitHub (see below).
-2. In Vercel: **New Project** → import the repo. Framework preset **Astro**, build `npm run build`, output `dist`. Deploy.
-3. **Custom domain `lucbeck.com`:**
-   - Vercel → Project → **Settings → Domains** → add `lucbeck.com` and `www.lucbeck.com`.
-   - At your domain registrar, point DNS at Vercel:
-     - Apex `lucbeck.com`: **A** record → `76.76.21.21` (or the ALIAS/ANAME Vercel shows).
-     - `www`: **CNAME** → `cname.vercel-dns.com`.
-   - Vercel issues HTTPS automatically once DNS resolves.
-
-### Push to GitHub
+## Running locally
 
 ```bash
-gh repo create lucbeck-portfolio --public --source=. --remote=origin --push
-# or: git remote add origin git@github.com:<you>/lucbeck-portfolio.git && git push -u origin main
+npm install
+npm run dev        # http://localhost:4321
+npm run build      # static output to dist/
+npm run preview    # serve the production build locally
 ```
 
-The repo is intended to be public — it doubles as a GitHub presence.
-
-## Deploy — GitHub Pages (fallback)
-
-A workflow is included at `.github/workflows/deploy-pages.yml`. To use it:
-
-1. Repo **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-2. Push to `main`; the workflow builds and deploys.
-3. For the custom domain on Pages instead of Vercel: add `lucbeck.com` under Settings → Pages, create a `public/CNAME` file containing `lucbeck.com`, and point apex DNS at the GitHub Pages IPs with a `www` CNAME to `<you>.github.io`.
-
-> If serving from a project subpath (e.g. `<you>.github.io/lucbeck-portfolio`) rather than a custom domain, set `base: '/lucbeck-portfolio'` and `site` accordingly in `astro.config.mjs`. With the `lucbeck.com` custom domain the current root config is correct.
-
-## Notes
-
-- Design tokens are committed in `design/tokens.css` (canonical) and mirrored to `src/styles/tokens.css` (shipped). Edit the accent in one place: the `--c-accent*` variables.
-- The `/taste` design analyses of the reference sites are in `design/taste/`.
+Node 18+ (developed on Node 22).
