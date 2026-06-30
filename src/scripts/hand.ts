@@ -211,11 +211,21 @@ export function initHand(): void {
 
   const demoGroup   = root.querySelector<SVGGElement>("#demo-hand");
   const policyGroup = root.querySelector<SVGGElement>("#policy-hand");
+  const demoSway    = root.querySelector<SVGGElement>("#demo-sway");
+  const robotSway   = root.querySelector<SVGGElement>("#robot-sway");
   const streamLayer = root.querySelector<SVGGElement>("#stream-dots");
   const recDot      = root.querySelector<SVGCircleElement>(".ha-rec-dot");
   const frameCounter= root.querySelector<SVGTextElement>("#frame-counter");
   const graphLines  = [0,1,2,3].map(i => root.querySelector<SVGPolylineElement>(`#graph-ch-${i}`));
   if (!demoGroup || !policyGroup) return;
+
+  // Arm "wave": the whole arm + mounted hand swing about a pivot (the off-panel
+  // elbow for the operator, the shoulder for the robot). Driven each frame.
+  const sway = (g: SVGGElement | null, deg: number) => {
+    if (!g) return;
+    const cx = Number(g.dataset.cx ?? 0), cy = Number(g.dataset.cy ?? 0);
+    g.setAttribute("transform", `rotate(${deg.toFixed(2)} ${cx} ${cy})`);
+  };
 
   const demo   = buildHand(demoGroup, "human");
   const policy = buildHand(policyGroup, "robot");
@@ -269,7 +279,14 @@ export function initHand(): void {
     const joints = getJoints(elapsed);
     const curls  = toCurls(joints);
     const lm = landmarks(curls);
-    const wristDeg = Math.sin(elapsed / 1000) * 9;   // subtle wrist turn
+    const wristDeg = Math.sin(elapsed / 1000) * 9;    // subtle wrist turn
+
+    // Wave: arm swings side-to-side on its axis. Same phase on both so the robot
+    // mirrors the operator. The robot pivots at the shoulder (closer to the
+    // hand) so it gets a wider angle to match the human's longer-lever swing.
+    const wavePhase = Math.sin(elapsed / 850);
+    sway(demoSway, wavePhase * 7);
+    sway(robotSway, wavePhase * 16);
 
     updateHand(demo, lm, wristDeg);
     updateHand(policy, lm, wristDeg);

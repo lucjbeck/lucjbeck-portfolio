@@ -65,11 +65,15 @@ const ROBOT_TILT = -28;
     <text class="ha-sublabel" x={LEFT_X + PANEL_W - 10}  y={PANEL_Y + 18} text-anchor="end">HAND TRACKING</text>
 
     <g clip-path="url(#ha-left-clip)">
-      <g id="demo-hand" transform={`translate(${DEMO_X} ${DEMO_Y}) rotate(${DEMO_TILT})`}>
-        <!-- Plain forearm (runs off-panel; no markings). Static — wrist turns. -->
-        <polygon class="ha-forearm" points="-17,2 17,2 30,150 -30,150" />
-        <!-- hand.ts builds skin + skeleton + dots inside here; this group turns -->
-        <g data-handroot />
+      <!-- the operator's arm waves from the (off-panel) elbow; hand.ts drives it,
+           in sync with the robot so the teleoperation/copy reads correctly -->
+      <g id="demo-sway" data-cx={DEMO_X} data-cy={DEMO_Y + 160}>
+        <g id="demo-hand" transform={`translate(${DEMO_X} ${DEMO_Y}) rotate(${DEMO_TILT})`}>
+          <!-- Plain forearm (runs off-panel; no markings). Static — wrist turns. -->
+          <polygon class="ha-forearm" points="-17,2 17,2 30,150 -30,150" />
+          <!-- hand.ts builds skin + skeleton + dots inside here; this group turns -->
+          <g data-handroot />
+        </g>
       </g>
     </g>
 
@@ -85,17 +89,21 @@ const ROBOT_TILT = -28;
 
     <g clip-path="url(#ha-right-clip)">
       <!-- Fixed simple arm at ~45°: base → rigid link → hand mount. No DOF. -->
+      <!-- planted base — does not move -->
       <g id="robot-arm">
         <rect class="ha-rob-base"   x={ARM_SX - 30} y={ARM_SY + 8} width="60" height="12" rx="4" />
         <rect class="ha-rob-turret" x={ARM_SX - 15} y={ARM_SY - 8} width="30" height="20" rx="4" />
         <circle class="ha-rob-shoulder" cx={ARM_SX} cy={ARM_SY} r="9" />
+      </g>
+
+      <!-- the arm + mounted hand swing about the shoulder (hand.ts waves this) -->
+      <g id="robot-sway" data-cx={ARM_SX} data-cy={ARM_SY}>
         <line class="ha-arm-ua" x1={ARM_SX} y1={ARM_SY} x2={MOUNT_X} y2={MOUNT_Y} />
         <rect class="ha-rob-mount" x={MOUNT_X - 13} y={MOUNT_Y - 4} width="26" height="14" rx="3"
           transform={`rotate(${ROBOT_TILT} ${MOUNT_X} ${MOUNT_Y})`} />
-      </g>
-
-      <g id="policy-hand" transform={`translate(${MOUNT_X} ${MOUNT_Y}) rotate(${ROBOT_TILT})`}>
-        <g data-handroot />
+        <g id="policy-hand" transform={`translate(${MOUNT_X} ${MOUNT_Y}) rotate(${ROBOT_TILT})`}>
+          <g data-handroot />
+        </g>
       </g>
     </g>
 
