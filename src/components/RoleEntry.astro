@@ -17,7 +17,7 @@
 import CatalogNumber from "./CatalogNumber.astro";
 
 interface Props {
-  tag: string;
+  tag?: string;
   firm: string;
   role?: string;
   term: string;
@@ -29,7 +29,7 @@ const { tag, firm, role, term, location } = Astro.props;
 
 <article class="entry hairline-cell" data-reveal>
   <div class="entry__rail">
-    <CatalogNumber label={tag} />
+    {tag && <CatalogNumber label={tag} />}
     <p class="entry__term">{term}</p>
     {location && <p class="entry__loc">{location}</p>}
   </div>
