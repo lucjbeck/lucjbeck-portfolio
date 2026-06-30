@@ -158,20 +158,10 @@ pre {
   border-top: var(--border);
 }
 
-/* ---- Reduced motion (brief mandate) ------------------------------------ */
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
+/* Reduced-motion is intentionally NOT honored — the site plays its animations
+   for all visitors (owner preference). The matchMedia override in Base.astro
+   re-enables the JS animations; leaving CSS transitions on keeps the reveals,
+   hover states, and menu morph animating too. */
 
 /* ---- Mobile refinements (≤860px) — desktop is untouched above ----------- */
 @media (max-width: 860px) {

@@ -37,6 +37,30 @@ const canonical = new URL(path, Astro.site ?? "https://lucbeck.com").href;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
 
+    <!-- Owner preference: always play the site's animations, even when the OS
+         requests reduced motion. Every animation script gates on matchMedia for
+         the reduced-motion query, so reporting "no preference" here re-enables
+         them all. Runs before the deferred animation modules. -->
+    <script is:inline>
+      (function () {
+        var orig = window.matchMedia ? window.matchMedia.bind(window) : null;
+        if (!orig) return;
+        var stub = function (q) {
+          return {
+            matches: false, media: q, onchange: null,
+            addEventListener: function () {}, removeEventListener: function () {},
+            addListener: function () {}, removeListener: function () {},
+            dispatchEvent: function () { return false; },
+          };
+        };
+        window.matchMedia = function (q) {
+          return (typeof q === "string" && q.indexOf("prefers-reduced-motion") !== -1)
+            ? stub(q)
+            : orig(q);
+        };
+      })();
+    </script>
+
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="author" content="Luc Beck" />
