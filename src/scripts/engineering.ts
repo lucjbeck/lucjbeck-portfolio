@@ -138,17 +138,36 @@ export function initEngineering(): void {
   const slotOf = (i: number) => ({ x: PLAT_X + specs[i].dx, y: yShift + specs[i].dy });
 
   const cur = { x: REST_CX, y: 150 };
+  const vcur: Record<string, number> = { x: 0, y: 0 };   // end-effector velocity
   let cartX = REST_CX;
+  const vcart: Record<string, number> = { v: 0 };        // carriage velocity
+  let dts = 1 / 60;                                       // last frame delta (seconds)
   let phase = "feed", pT = 0, last = performance.now(), step = 0, carry = -1, rang = 0;
   let ex = 0, drop = 0;
-  const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
   const near = (x: number, y: number, d = 4) => Math.hypot(cur.x - x, cur.y - y) < d;
-  const goal = (gx: number, gy: number, k = 0.12) => { cur.x = lerp(cur.x, gx, k); cur.y = lerp(cur.y, gy, k); };
+
+  // Critically-damped smoothing (SmoothDamp). Eases in AND out, is framerate-
+  // independent, and carries momentum across target changes, so the arm flows
+  // between phases instead of snapping. Larger smoothTime = slower, softer.
+  const smoothDamp = (c: number, target: number, st: Record<string, number>,
+                      key: string, smoothTime: number) => {
+    const omega = 2 / Math.max(0.0001, smoothTime);
+    const x = omega * dts;
+    const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
+    const change = c - target;
+    const temp = (st[key] + omega * change) * dts;
+    st[key] = (st[key] - omega * temp) * exp;
+    return target + (change + temp) * exp;
+  };
+  const goal = (gx: number, gy: number, smoothTime = 0.22) => {
+    cur.x = smoothDamp(cur.x, gx, vcur, "x", smoothTime);
+    cur.y = smoothDamp(cur.y, gy, vcur, "y", smoothTime);
+  };
 
   function frame(now: number) {
-    const dt = Math.min(40, now - last); last = now; pT += dt;
+    const dt = Math.min(40, now - last); last = now; pT += dt; dts = dt / 1000;
 
-    rang = (rang + 2.4) % 360;
+    rang = (rang + dt * 0.14) % 360;
     rollers.forEach((gr) => { const c = gr.querySelector("circle"); if (c) gr.setAttribute("transform", `rotate(${rang.toFixed(1)} ${c.getAttribute("cx")} ${c.getAttribute("cy")})`); });
 
     if (phase === "feed") {
@@ -162,7 +181,7 @@ export function initEngineering(): void {
       goal(PICK.x, 150);
       if (near(PICK.x, 150)) { phase = "carry"; pT = 0; }
     } else if (phase === "carry") {
-      const s = slotOf(step); goal(s.x, s.y, 0.09);
+      const s = slotOf(step); goal(s.x, s.y, 0.32);   // slower, gentle placement
       if (near(s.x, s.y)) { phase = "release"; pT = 0; }
     } else if (phase === "release") {
       const s = slotOf(step); pos[step].x = s.x; pos[step].y = s.y; asm[step] = { x: s.x, y: s.y };
@@ -192,7 +211,7 @@ export function initEngineering(): void {
 
     // wrist sits above the held part; carriage slides above the target
     const wristX = cur.x, wristY = cur.y - GRAB_DY;
-    cartX = lerp(cartX, Math.max(RAIL_MIN, Math.min(RAIL_MAX, wristX)), 0.12);
+    cartX = smoothDamp(cartX, Math.max(RAIL_MIN, Math.min(RAIL_MAX, wristX)), vcart, "v", 0.2);
     const cdx = cartX - REST_CX;
     carriage.setAttribute("transform", `translate(${cdx.toFixed(1)} 0)`);
     const { r1, r2 } = ik(wristX - cdx, wristY);
