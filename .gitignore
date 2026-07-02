@@ -28,3 +28,4 @@ pnpm-debug.log*
 
 # Playwright screenshot output
 .screenshots/
+session-export.txt

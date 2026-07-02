@@ -27,7 +27,9 @@ const {
   path = "/",
 } = Astro.props;
 
-const canonical = new URL(path, Astro.site ?? "https://lucbeck.com").href;
+const site = Astro.site ?? "https://www.lucbeck.com";
+const canonical = new URL(path, site).href;
+const ogImage = new URL("/og-image.png", site).href;
 ---
 
 <!doctype html>
@@ -94,7 +96,7 @@ const canonical = new URL(path, Astro.site ?? "https://lucbeck.com").href;
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="https://lucbeck.com/og-image.png" />
+    <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Luc Beck — Engineer, Researcher, Builder" />
@@ -103,7 +105,7 @@ const canonical = new URL(path, Astro.site ?? "https://lucbeck.com").href;
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content="https://lucbeck.com/og-image.png" />
+    <meta name="twitter:image" content={ogImage} />
   </head>
   <body>
     <slot />
