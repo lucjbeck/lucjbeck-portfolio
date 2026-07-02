@@ -66,6 +66,7 @@ const ogImage = new URL("/og-image.png", site).href;
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="author" content="Luc Beck" />
+    <meta name="robots" content="max-image-preview:large" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#0A0B0D" />
     <link rel="canonical" href={canonical} />
@@ -106,6 +107,28 @@ const ogImage = new URL("/og-image.png", site).href;
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+
+    <!-- Person entity for Google (knowledge panel / image results) -->
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Person",
+        name: "Luc Beck",
+        url: site,
+        image: ogImage,
+        jobTitle: "Engineering Student",
+        affiliation: {
+          "@type": "CollegeOrUniversity",
+          name: "University of Pennsylvania",
+        },
+        sameAs: [
+          "https://x.com/lucjbeck",
+          "https://github.com/lucjbeck",
+          "https://www.instagram.com/beck.luc",
+        ],
+      })}
+    />
   </head>
   <body>
     <slot />
